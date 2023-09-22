@@ -60,6 +60,14 @@ const Home = ({ navigation }: any) => {
 
                    <View style={{ top: 60,  paddingLeft: 15}}>
 
+                    <TouchableOpacity>
+                       <Ionicons name='add' size={24} color={'#000000'}/>
+
+                    </TouchableOpacity>
+                        
+
+
+
                         <Text style={{ fontSize: 28, fontWeight: 'bold', color:'#000000'}}>Reflect on my life</Text>
 
                         <View style={{flexDirection: 'row', justifyContent: 'space-around', right:30, top: 20, paddingLeft: 22}}>
