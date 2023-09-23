@@ -11,10 +11,11 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 Ionicons.loadFont
 
 import Configs from './Configs'
+import Stories from './Stories'
 
 export type BottomTabParamList = {
   Home: undefined;
-  Configs: undefined;
+  Stories: undefined;
 };
 
 const CustomBottomTabs = (props: BottomTabBarProps) => {
@@ -41,11 +42,12 @@ const Tabs = () => {
       <Tab.Screen 
        name='Home'
        component={Home}
-       options={{headerShown: true}}/>
+       options={{headerShown: false}}/>
       
       <Tab.Screen 
-            name='Configs'
-            component={Configs}
+            name='Stories'
+            component={Stories}
+            options={{headerShown: false}}
             />
 
     </Tab.Navigator>
@@ -66,10 +68,10 @@ const Main = (props: any) => {
             component={Tabs}
           />
            <Stack.Screen
-            name='configs'
+            name='config'
             component={Configs}
             options={{
-              headerShown: true
+              headerShown: false
             }}
           />
           </Stack.Navigator>

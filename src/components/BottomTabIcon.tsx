@@ -17,16 +17,16 @@ const BottomTabIcon = ({route, isFocused}: Props) => {
     switch (route) {
       case 'Home':
         return (
-        isFocused ? <Ionicons name='sunny' size={34} color={'#0067FF'}/> 
+        isFocused ? <Ionicons name='sunny' size={34} color={'#171626'}/> 
                 :
         <Ionicons name='sunny-outline' size={34} color={'#ffffff'}/> 
         
         );
-      case 'Configs':
+      case 'Stories':
         return (
-            isFocused ? <Ionicons name='settings' size={34} color={'#0067FF'}/> 
+            isFocused ? <Ionicons name='journal' size={34} color={'#171626'}/> 
                     :
-            <Ionicons name='settings-outline' size={34} color={'#ffffff'}/> 
+            <Ionicons name='journal-outline' size={34} color={'#ffffff'}/> 
             
             );
       default:
