@@ -61,7 +61,6 @@ export default CheckBoxFeel
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     marginLeft: 7,
     display: 'flex',
     flexDirection: 'row',

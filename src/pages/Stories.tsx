@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   StyleSheet,
   Text,
@@ -8,15 +8,14 @@ import {
   Dimensions,
   Modal,
   TouchableOpacity,
-  TextInput
+  Alert
 } from 'react-native'
 import data from '../data'
 import { MotiView } from 'moti'
-
 import { Input } from 'react-native-elements'
-
-import Ionicons from 'react-native-vector-icons/Ionicons'
 import CheckBoxFeel from '../components/CheckBoxFeel'
+import CheckBoxReason from '../components/CheckBoxReason'
+import Ionicons from 'react-native-vector-icons/Ionicons'
 Ionicons.loadFont
 
 interface data {
@@ -42,21 +41,49 @@ const Stories = () => {
   const showModal = () => setVisible(true)
   const hideModal = () => setVisible(false)
 
-  const [options, setOptions] = useState([])
+  const [optionsFeel, setOptionsFeel] = useState([])
+  const [optionsReason, setOptionsReason] = useState([])
 
-  const op1 = { text: '😄 Awesome', id: 'awesome' }
-  const op2 = { text: '😊 Pretty good', id: 'pretty_good' }
-  const op3 = { text: '😐 Quite OK', id: 'quite_ok' }
-  const op4 = { text: '😔 Kind of bad', id: 'kind_of_bad' }
-  const op5 = { text: '😥 Horrible', id: 'horrible' }
+  const opFeel1 = { text: '😄 Awesome', id: 'awesome' }
+  const opFeel2 = { text: '😊 Pretty good', id: 'pretty_good' }
+  const opFeel3 = { text: '😐 Quite OK', id: 'quite_ok' }
+  const opFeel4 = { text: '😔 Kind of bad', id: 'kind_of_bad' }
+  const opFeel5 = { text: '😥 Horrible', id: 'horrible' }
 
-  const optionsMultiple = [op1, op2, op3, op4, op5]
+  const opReason1 = { text: '👪 Family', id: 'family' }
+  const opReason2 = { text: '🍲 Food', id: 'food' }
+  const opReason3 = { text: '👬 Friends', id: 'friends' }
+  const opReason4 = { text: '👨🏼‍⚕️ Health', id: 'health' }
+  const opReason5 = { text: '🪂 Hobbies', id: 'hobbies' }
+  const opReason6 = { text: '👫 Relationship', id: 'relationship' }
+  const opReason7 = { text: '🚴 Sport', id: 'sport' }
+  const opReason8 = { text: '💼 Work', id: 'work' }
 
-  const handleActiveSaveButton = (storyDescribelen: string) => {
-    if (storyDescribelen.trim().length >= 6) {
-      setDisabledButtonSave(false)
+  const optionsFeelMultiple = [opFeel1, opFeel2, opFeel3, opFeel4, opFeel5]
+  const optionsReasonMultiple = [
+    opReason1,
+    opReason2,
+    opReason3,
+    opReason4,
+    opReason5,
+    opReason6,
+    opReason7,
+    opReason8
+  ]
+
+  const handleCanSave = () => {
+    console.log(storyDescribe)
+    console.log(optionsFeel)
+    if (
+      storyDescribe.trim().toString().length >= 6 &&
+      optionsFeel.toString().length > 0
+    ) {
+      Alert.alert('Success', 'Nice')
     } else {
-      setDisabledButtonSave(true)
+      Alert.alert(
+        'Error',
+        'Fill in the  "Your story" field which must have at least 6 characters and select "How did you feel"'
+      )
     }
   }
 
@@ -104,6 +131,7 @@ const Stories = () => {
         <Text style={{ textAlign: 'center' }}>My Stories</Text>
       </View>
       <SafeAreaView style={styles.container}>
+        {/*   INICIO MODAL        */}
         <Modal visible={visible} animationType="slide">
           <SafeAreaView style={[styles.container, styles.grey]}>
             <SafeAreaView
@@ -113,7 +141,12 @@ const Stories = () => {
                 padding: 10
               }}
             >
-              <TouchableOpacity onPress={hideModal}>
+              <TouchableOpacity
+                onPress={() => {
+                  hideModal()
+                  setStoryDescribe('')
+                }}
+              >
                 <Text
                   style={{
                     fontSize: 18,
@@ -124,13 +157,13 @@ const Stories = () => {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={hideModal}
-                disabled={disabledButtonSave}
+                onPress={() => handleCanSave()}
+                // disabled={disabledButtonSave}
               >
                 <Text
                   style={{
-                    fontSize: 18,
-                    color: disabledButtonSave ? '#7673737e' : '#000000'
+                    fontSize: 18
+                    //color: disabledButtonSave ? '#7673737e' : '#000000'
                   }}
                 >
                   Save
@@ -155,37 +188,8 @@ const Stories = () => {
               >
                 Your story
               </Text>
-              {/*
+
               <Input
-                style={{
-                  fontSize: 16,
-                  color: '#000',
-                  borderWidth: 1,
-                  borderBottomWidth: 0.2,
-                  marginTop: 20,
-                  borderRadius: 6,
-                  right: 0,
-                  left: 0,
-                  elevation: 0,
-                  borderTopColor: '#a7a7a7',
-                  borderBottomColor: '#a7a7a7',
-                  borderRightColor: '#a7a7a7',
-                  borderLeftColor: '#a7a7a7',
-                  width: '100%'
-                }}
-                placeholder={
-                  'Describe your day in one setence. Take the time to think about waht has made your day.'
-                }
-                placeholderTextColor={'#a7a7a7'}
-                value={storyDescribe}
-                multiline={true}
-                onChangeText={(str) => setStoryDescribe(str)}
-                maxLength={200}
-                cursorColor={'#000'}
-                underlineColorAndroid={'transparent'}
-                pointerEvents="auto"
-              />*/}
-              <TextInput
                 style={{
                   fontSize: 16,
                   color: '#000',
@@ -207,14 +211,10 @@ const Stories = () => {
                   'Describe your day in one setence. Take the time to think about waht has made your day.'
                 }
                 value={storyDescribe}
-                onChangeText={(str) => {
-                  setStoryDescribe(str)
-                  handleActiveSaveButton(str)
-                }}
-                multiline
+                onChangeText={(str) => setStoryDescribe(str)}
+                multiline={true}
                 cursorColor={'#000000'}
               />
-
               <Text
                 style={{
                   fontSize: 26,
@@ -225,13 +225,30 @@ const Stories = () => {
                 How did you feel?
               </Text>
               <CheckBoxFeel
-                options={optionsMultiple}
-                onChange={(op) => setOptions(op)}
+                options={optionsFeelMultiple}
+                onChange={(op) => setOptionsFeel(op)}
                 multiple={false}
               />
-              {console.log('OPTIONS ', options)}
+
+              <Text
+                style={{
+                  fontSize: 26,
+                  fontWeight: 'bold',
+                  color: '#000000'
+                }}
+              >
+                What was the reason?
+              </Text>
+              <CheckBoxReason
+                options={optionsReasonMultiple}
+                onChange={(op) => setOptionsReason(op)}
+                multiple={false}
+              />
             </View>
+            {console.log('FEELOPTION ', optionsFeel)}
+            {console.log('REASONOPTION ', optionsReason)}
           </SafeAreaView>
+          {/*   FIM MODAL   */}
         </Modal>
         <FlatList
           data={data}
