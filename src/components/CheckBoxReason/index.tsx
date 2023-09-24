@@ -61,7 +61,7 @@ export default CheckBoxReason
 
 const styles = StyleSheet.create({
   container: {
-    marginLeft: 7,
+    marginLeft: 5,
     display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap'
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     color: '#0000'
   },
   touchable: {
-    width: 110,
+    width: 112,
     marginBottom: 8,
     height: 30,
     borderRadius: 4,
@@ -80,12 +80,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderColor: '#000000',
     color: '#555',
-    marginRight: 8
+    marginRight: 7
   },
   optext: {
     color: '#555',
     fontSize: 14,
     fontWeight: '600',
-    padding: 5
+    padding: 5,
+    textAlign: 'center'
   }
 })

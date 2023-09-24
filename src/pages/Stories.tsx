@@ -55,9 +55,9 @@ const Stories = () => {
   const opReason3 = { text: '👬 Friends', id: 'friends' }
   const opReason4 = { text: '👨🏼‍⚕️ Health', id: 'health' }
   const opReason5 = { text: '🪂 Hobbies', id: 'hobbies' }
-  const opReason6 = { text: '👫 Relationship', id: 'relationship' }
   const opReason7 = { text: '🚴 Sport', id: 'sport' }
   const opReason8 = { text: '💼 Work', id: 'work' }
+  const opReason6 = { text: '❤️ Relationship', id: 'relationship' }
 
   const optionsFeelMultiple = [opFeel1, opFeel2, opFeel3, opFeel4, opFeel5]
   const optionsReasonMultiple = [
