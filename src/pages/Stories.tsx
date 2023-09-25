@@ -64,9 +64,6 @@ const Stories = (props) => {
   const [imageInBase64, setImageInBase64] = useState(null)
   const [stories, setStories] = useState<StorysProps[]>([])
 
-  const [feelEmoji, setFeelEmoji] = useState('')
-  const [reasonEmoji, setReasonEmoji] = useState('')
-
   const showModal = () => setVisible(true)
   const hideModal = () => setVisible(false)
 
@@ -174,7 +171,7 @@ const Stories = (props) => {
 
       let sendFeelEmojis = feelEmojis.filter((element) => element.id === id)
 
-      setFeelEmoji(sendFeelEmojis[0].text)
+      return sendFeelEmojis[0].text
     }
   }
 
@@ -193,7 +190,7 @@ const Stories = (props) => {
 
       let sendReasonEmojis = reasonEmojis.filter((element) => element.id === id)
 
-      setReasonEmoji(sendReasonEmojis[0].text)
+      return sendReasonEmojis[0].text
     }
   }
 
@@ -209,17 +206,12 @@ const Stories = (props) => {
       reason: data.reason,
       placeName: data.placeName,
       image: data.image,
-      date: data.date
+      date: data.date,
+      emojiCategory: data.emojiCategory
     }
-    try {
-      realm.write(() => {
-        realm.create(dbName, dadosStory)
-      })
-    } catch (error) {
-      Alert.alert('DEU ERRO MOPAI REAL<+M TA BAGUNÇANDO', error)
-    } finally {
-      realm.close()
-    }
+    realm.write(() => {
+      realm.create(dbName, dadosStory)
+    })
   }
 
   const selectImage = () => {
@@ -250,6 +242,18 @@ const Stories = (props) => {
     )
   }
 
+  const checkCategoryToTheMoment = (feeloption: string) => {
+    if (
+      feeloption == 'awesome' ||
+      feeloption == 'pretty_good' ||
+      feeloption == 'quite_ok'
+    ) {
+      return 'goodTime'
+    } else {
+      return 'rougherTime'
+    }
+  }
+
   const handleCanSave = async () => {
     console.log(storyDescribe)
     console.log(optionsFeel)
@@ -258,14 +262,18 @@ const Stories = (props) => {
       optionsFeel.toString().length > 0
     ) {
       try {
+        const emojiCategory = checkCategoryToTheMoment(optionsFeel[0])
+
         const data = {
           describe: storyDescribe,
           feel: optionsFeel[0],
           reason: optionsReason[0],
           placeName: placeName,
           image: imageInBase64,
-          date: new Date()
+          date: new Date(),
+          emojiCategory: emojiCategory
         }
+
         await saveStory(data)
 
         setStoryDescribe('')
@@ -289,8 +297,6 @@ const Stories = (props) => {
   }
 
   const renderItem = ({ item, index }: StorysProps) => {
-    filterFeelEmojis(item.feel)
-    filterReasonEmojis(item.reason)
     console.log('renderItem ', stories)
     return (
       <MotiView
@@ -299,7 +305,11 @@ const Stories = (props) => {
         animate={{ opacity: 1, translateY: 0 }}
         transition={{ delay: 1000 + index * 200 }}
       >
-        <Text style={styles.text}>{item.describe}</Text>
+        <Text style={styles.text}>
+          {item.describe.toString().legth <= 40
+            ? item.describe
+            : item.describe.toString().substr(0, 37) + '...'}
+        </Text>
         <View style={{ flexDirection: 'row' }}>
           <Ionicons
             style={{ top: 10, paddingLeft: 16 }}
@@ -310,7 +320,7 @@ const Stories = (props) => {
           <Text style={styles.date}>
             {formatDistance(new Date(item.date), new Date(), {
               locale: undefined,
-              addSuffix: true
+              addSuffix: false
             })}
           </Text>
           <View
@@ -320,8 +330,12 @@ const Stories = (props) => {
               top: 7
             }}
           >
-            <Text style={{ color: '#000000' }}>{feelEmoji}</Text>
-            <Text style={{ color: '#000000' }}>{reasonEmoji}</Text>
+            <Text style={{ color: '#000000' }}>
+              {filterFeelEmojis(item.feel)}
+            </Text>
+            <Text style={{ color: '#000000' }}>
+              {filterReasonEmojis(item.reason)}
+            </Text>
           </View>
         </View>
       </MotiView>

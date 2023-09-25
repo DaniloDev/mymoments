@@ -1,12 +1,61 @@
 import React, { useState } from 'react'
-import { View, Text, StyleSheet, Image } from 'react-native'
+import { View, Text, StyleSheet, Image, Alert } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import getRealm from '../services/realm'
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import { StorysProps } from '../models/Stories.interface'
 Ionicons.loadFont
 
 const Home = ({ navigation }: any) => {
   const [daylyMotivation, setDaylyMotivation] = useState('')
+  const [goodTimes, setGoodTimes] = useState<StorysProps[]>([])
+  const [routherTimes, setRoutherTimes] = useState<StorysProps[]>([])
+
+  const getGoodTimes = async () => {
+    const realm = await getRealm()
+
+    try {
+      const goodTime = 'goodTime'
+      const response = realm
+        .objects<StorysProps[]>('Story')
+        .filtered(`emojiCategory = '${goodTime}'`)
+        .sorted('date')
+        .toJSON()
+
+      console.log(' GOOD TIMES ', response)
+      console.log(' GOOD TIMES LENGTH ', response.length)
+      setGoodTimes(response)
+    } catch (error) {
+      console.log(error)
+      Alert.alert('Good Times', 'ERROR in Good Times')
+    } finally {
+      realm.close()
+    }
+  }
+
+  const getRougherTimes = async () => {
+    const realm = await getRealm()
+
+    try {
+      const rougherTime = 'rougherTime'
+      const response = realm
+        .objects<StorysProps[]>('Story')
+        .filtered(`emojiCategory = '${rougherTime}'`)
+        .sorted('date')
+        .toJSON()
+
+      console.log(' ROUGHER TIMES ', response)
+      console.log(' ROUGHER TIMES LENGTH ', response.length)
+      setGoodTimes(response)
+    } catch (error) {
+      console.log(error)
+      Alert.alert('Rougher Times', 'ERROR in Rougher Times')
+    } finally {
+      realm.close()
+    }
+  }
+
   return (
     <>
       <View style={{ backgroundColor: '#ffffff' }}>
@@ -88,11 +137,7 @@ const Home = ({ navigation }: any) => {
                   paddingLeft: 22
                 }}
               >
-                <TouchableOpacity
-                  onPress={() => {
-                    console.log('MY GOOD TIMES')
-                  }}
-                >
+                <TouchableOpacity onPress={getGoodTimes}>
                   <View
                     style={{
                       width: 100,
@@ -115,11 +160,7 @@ const Home = ({ navigation }: any) => {
                   </View>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={() => {
-                    console.log('MY ROUGHER TIMES')
-                  }}
-                >
+                <TouchableOpacity onPress={getRougherTimes}>
                   <View
                     style={{
                       width: 100,
