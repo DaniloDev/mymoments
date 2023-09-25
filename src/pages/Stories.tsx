@@ -6,15 +6,19 @@ import {
   SafeAreaView,
   FlatList,
   Dimensions,
-  Modal,
   TouchableOpacity,
-  Alert
+  Alert,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView
 } from 'react-native'
 import data from '../data'
 import { MotiView } from 'moti'
 import { Input } from 'react-native-elements'
 import CheckBoxFeel from '../components/CheckBoxFeel'
 import CheckBoxReason from '../components/CheckBoxReason'
+//import Modal from 'react-native-modal'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 Ionicons.loadFont
 
@@ -37,6 +41,7 @@ interface data {
 const Stories = () => {
   const [visible, setVisible] = useState(false)
   const [storyDescribe, setStoryDescribe] = useState('')
+  const [placeName, setPlaceName] = useState('')
   const [disabledButtonSave, setDisabledButtonSave] = useState(true)
   const showModal = () => setVisible(true)
   const hideModal = () => setVisible(false)
@@ -133,122 +138,166 @@ const Stories = () => {
       <SafeAreaView style={styles.container}>
         {/*   INICIO MODAL        */}
         <Modal visible={visible} animationType="slide">
-          <SafeAreaView style={[styles.container, styles.grey]}>
-            <SafeAreaView
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                padding: 10
-              }}
+          <KeyboardAvoidingView
+            behavior={Platform.OS == 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={80}
+          >
+            <ScrollView
+              style={{ width: '100%' }}
+              showsVerticalScrollIndicator={false}
             >
-              <TouchableOpacity
-                onPress={() => {
-                  hideModal()
-                  setStoryDescribe('')
-                }}
-              >
-                <Text
+              {/* @ts-ignore  */}
+              <SafeAreaView style={[styles.container, styles.grey]}>
+                <SafeAreaView
                   style={{
-                    fontSize: 18,
-                    color: '#000000'
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    padding: 10
                   }}
                 >
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleCanSave()}
-                // disabled={disabledButtonSave}
-              >
-                <Text
+                  <TouchableOpacity
+                    onPress={() => {
+                      hideModal()
+                      setStoryDescribe('')
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        color: '#000000'
+                      }}
+                    >
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleCanSave()}
+                    // disabled={disabledButtonSave}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 18
+                        //color: disabledButtonSave ? '#7673737e' : '#000000'
+                      }}
+                    >
+                      Save
+                    </Text>
+                  </TouchableOpacity>
+                </SafeAreaView>
+                {/* @ts-ignore */}
+                <View
                   style={{
-                    fontSize: 18
-                    //color: disabledButtonSave ? '#7673737e' : '#000000'
+                    alignItems: 'left',
+                    backgroundColor: '#ffffff',
+                    flex: 1,
+                    padding: 5
                   }}
                 >
-                  Save
-                </Text>
-              </TouchableOpacity>
-            </SafeAreaView>
+                  <Text
+                    style={{
+                      fontSize: 32,
+                      fontWeight: 'bold',
+                      color: '#000000'
+                    }}
+                  >
+                    Your story
+                  </Text>
 
-            <View
-              style={{
-                alignItems: 'left',
-                backgroundColor: '#ffffff',
-                flex: 1,
-                padding: 5
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 32,
-                  fontWeight: 'bold',
-                  color: '#000000'
-                }}
-              >
-                Your story
-              </Text>
+                  <Input
+                    style={{
+                      fontSize: 16,
+                      color: '#000',
+                      borderWidth: 1,
+                      borderBottomWidth: 0.2,
+                      marginTop: 20,
+                      borderRadius: 6,
+                      right: 0,
+                      left: 0,
+                      elevation: 0,
+                      borderTopColor: '#a7a7a7',
+                      borderBottomColor: '#a7a7a7',
+                      borderRightColor: '#a7a7a7',
+                      borderLeftColor: '#a7a7a7',
+                      paddingLeft: 25,
+                      paddingBottom: 20
+                    }}
+                    placeholder={
+                      'Describe your day in one setence. Take the time to think about waht has made your day.'
+                    }
+                    value={storyDescribe}
+                    onChangeText={(str) => setStoryDescribe(str)}
+                    multiline={true}
+                    cursorColor={'#000000'}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 26,
+                      fontWeight: 'bold',
+                      color: '#000000'
+                    }}
+                  >
+                    How did you feel?
+                  </Text>
+                  <CheckBoxFeel
+                    options={optionsFeelMultiple}
+                    onChange={(op) => setOptionsFeel(op)}
+                    multiple={false}
+                  />
 
-              <Input
-                style={{
-                  fontSize: 16,
-                  color: '#000',
-                  borderWidth: 1,
-                  borderBottomWidth: 0.2,
-                  marginTop: 20,
-                  borderRadius: 6,
-                  right: 0,
-                  left: 0,
-                  elevation: 0,
-                  borderTopColor: '#a7a7a7',
-                  borderBottomColor: '#a7a7a7',
-                  borderRightColor: '#a7a7a7',
-                  borderLeftColor: '#a7a7a7',
-                  paddingLeft: 25,
-                  paddingBottom: 20
-                }}
-                placeholder={
-                  'Describe your day in one setence. Take the time to think about waht has made your day.'
-                }
-                value={storyDescribe}
-                onChangeText={(str) => setStoryDescribe(str)}
-                multiline={true}
-                cursorColor={'#000000'}
-              />
-              <Text
-                style={{
-                  fontSize: 26,
-                  fontWeight: 'bold',
-                  color: '#000000'
-                }}
-              >
-                How did you feel?
-              </Text>
-              <CheckBoxFeel
-                options={optionsFeelMultiple}
-                onChange={(op) => setOptionsFeel(op)}
-                multiple={false}
-              />
-
-              <Text
-                style={{
-                  fontSize: 26,
-                  fontWeight: 'bold',
-                  color: '#000000'
-                }}
-              >
-                What was the reason?
-              </Text>
-              <CheckBoxReason
-                options={optionsReasonMultiple}
-                onChange={(op) => setOptionsReason(op)}
-                multiple={false}
-              />
-            </View>
-            {console.log('FEELOPTION ', optionsFeel)}
-            {console.log('REASONOPTION ', optionsReason)}
-          </SafeAreaView>
-          {/*   FIM MODAL   */}
+                  <Text
+                    style={{
+                      fontSize: 26,
+                      fontWeight: 'bold',
+                      color: '#000000'
+                    }}
+                  >
+                    What was the reason?
+                  </Text>
+                  <CheckBoxReason
+                    options={optionsReasonMultiple}
+                    onChange={(op) => setOptionsReason(op)}
+                    multiple={false}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 26,
+                      fontWeight: 'bold',
+                      color: '#000000'
+                    }}
+                  >
+                    Was thre a special place?
+                  </Text>
+                  <Input
+                    style={{
+                      fontSize: 16,
+                      color: '#000',
+                      borderWidth: 1,
+                      borderBottomWidth: 0.2,
+                      marginTop: 20,
+                      borderRadius: 6,
+                      right: 0,
+                      left: 0,
+                      elevation: 0,
+                      borderTopColor: '#a7a7a7',
+                      borderBottomColor: '#a7a7a7',
+                      borderRightColor: '#a7a7a7',
+                      borderLeftColor: '#a7a7a7',
+                      paddingLeft: 25,
+                      paddingBottom: 20
+                    }}
+                    placeholder={'type a place name'}
+                    value={placeName}
+                    onChangeText={(str) => setPlaceName(str)}
+                    multiline={false}
+                    cursorColor={'#000000'}
+                  />
+                </View>
+                {console.log('FEELOPTION ', optionsFeel)}
+                {console.log('REASONOPTION ', optionsReason)}
+              </SafeAreaView>
+              {/*   FIM MODAL   */}
+            </ScrollView>
+          </KeyboardAvoidingView>
         </Modal>
         <FlatList
           data={data}
