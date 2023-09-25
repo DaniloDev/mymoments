@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import {
   StyleSheet,
   Text,
@@ -13,9 +13,14 @@ import {
   Platform,
   ScrollView,
   PermissionsAndroid,
-  Image
+  Image,
+  Keyboard,
+  LogBox
 } from 'react-native'
-import data from '../data'
+//import data from '../data'
+
+import { format, formatDistance } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { MotiView } from 'moti'
 import { Input } from 'react-native-elements'
 import CheckBoxFeel from '../components/CheckBoxFeel'
@@ -23,10 +28,16 @@ import CheckBoxReason from '../components/CheckBoxReason'
 //import Modal from 'react-native-modal'
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker'
 import { Base64 } from 'js-base64'
+import { StorysProps } from '../models/Stories.interface'
+import getRealm from '../services/realm'
+import { getID } from '../utils/functions'
+import { useFocusEffect } from '@react-navigation/native'
+import { useIsFocused } from '@react-navigation/native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
+
 Ionicons.loadFont
 
-interface data {
+/*interface data {
   item: {
     id: number
     text: string
@@ -40,16 +51,26 @@ interface data {
     image: string
   }
   index: number
-}
+}*/
 
-const Stories = () => {
+LogBox.ignoreAllLogs(true)
+
+const Stories = (props) => {
   const [visible, setVisible] = useState(false)
   const [storyDescribe, setStoryDescribe] = useState('')
   const [placeName, setPlaceName] = useState('')
   const [disabledButtonSave, setDisabledButtonSave] = useState(true)
   const [selectedImage, setSelectedImage] = useState(null)
+  const [imageInBase64, setImageInBase64] = useState(null)
+  const [stories, setStories] = useState<StorysProps[]>([])
+
+  const [feelEmoji, setFeelEmoji] = useState('')
+  const [reasonEmoji, setReasonEmoji] = useState('')
+
   const showModal = () => setVisible(true)
   const hideModal = () => setVisible(false)
+
+  const isFocused = useIsFocused()
 
   const [optionsFeel, setOptionsFeel] = useState([])
   const [optionsReason, setOptionsReason] = useState([])
@@ -120,6 +141,87 @@ const Stories = () => {
     }
   }*/
 
+  useFocusEffect(
+    useCallback(() => {
+      const dbName = 'Story'
+      const loadStories = async () => {
+        const realm = await getRealm()
+        const data = realm.objects(dbName)
+        setStories(data)
+        console.log('STORIES', stories)
+      }
+
+      loadStories()
+    }, [props, isFocused])
+  )
+
+  const filterFeelEmojis = (id: string) => {
+    if (id.length > 0) {
+      let feelEmojis = [
+        { text: '😄', id: 'awesome' },
+        { text: '😊', id: 'pretty_good' },
+        { text: '😐', id: 'quite_ok' },
+        { text: '😔', id: 'kind_of_bad' },
+        { text: '😥', id: 'horrible' },
+        { text: '👪', id: 'family' },
+        { text: '🍲', id: 'food' },
+        { text: '👬', id: 'friends' },
+        { text: '👨🏼‍⚕️', id: 'health' },
+        { text: '🪂', id: 'sport' },
+        { text: '💼', id: 'work' },
+        { text: '❤️', id: 'relationship' }
+      ]
+
+      let sendFeelEmojis = feelEmojis.filter((element) => element.id === id)
+
+      setFeelEmoji(sendFeelEmojis[0].text)
+    }
+  }
+
+  const filterReasonEmojis = (id: string) => {
+    if (id.length > 0) {
+      let reasonEmojis = [
+        { text: '👪', id: 'family' },
+        { text: '🍲', id: 'food' },
+        { text: '👬', id: 'friends' },
+        { text: '👨🏼‍⚕️', id: 'health' },
+        { text: '🪂', id: 'hobbies' },
+        { text: '🚴', id: 'sport' },
+        { text: '💼', id: 'work' },
+        { text: '❤️', id: 'relationship' }
+      ]
+
+      let sendReasonEmojis = reasonEmojis.filter((element) => element.id === id)
+
+      setReasonEmoji(sendReasonEmojis[0].text)
+    }
+  }
+
+  const saveStory = async (data: StorysProps) => {
+    const realm = await getRealm()
+    const dbName = 'Story'
+    const id = await getID(dbName)
+
+    const dadosStory = {
+      id: id,
+      describe: data.describe,
+      feel: data.feel,
+      reason: data.reason,
+      placeName: data.placeName,
+      image: data.image,
+      date: data.date
+    }
+    try {
+      realm.write(() => {
+        realm.create(dbName, dadosStory)
+      })
+    } catch (error) {
+      Alert.alert('DEU ERRO MOPAI REAL<+M TA BAGUNÇANDO', error)
+    } finally {
+      realm.close()
+    }
+  }
+
   const selectImage = () => {
     launchImageLibrary(
       {
@@ -141,20 +243,43 @@ const Stories = () => {
             response.assets[0].type
           };base64,${Base64.encode(response.assets[0].uri)}`
           setSelectedImage(response.assets[0].uri)
+          setImageInBase64(base64Image)
           console.log(base64Image)
         }
       }
     )
   }
 
-  const handleCanSave = () => {
+  const handleCanSave = async () => {
     console.log(storyDescribe)
     console.log(optionsFeel)
     if (
       storyDescribe.trim().toString().length >= 6 &&
       optionsFeel.toString().length > 0
     ) {
-      Alert.alert('Success', 'Nice')
+      try {
+        const data = {
+          describe: storyDescribe,
+          feel: optionsFeel[0],
+          reason: optionsReason[0],
+          placeName: placeName,
+          image: imageInBase64,
+          date: new Date()
+        }
+        await saveStory(data)
+
+        setStoryDescribe('')
+        setOptionsFeel([])
+        setOptionsReason([])
+        setPlaceName('')
+        setSelectedImage(null)
+        setImageInBase64(null)
+        hideModal()
+        Keyboard.dismiss()
+        Alert.alert('Success', 'Nice')
+      } catch (err) {
+        Alert.alert(err)
+      }
     } else {
       Alert.alert(
         'Error',
@@ -163,7 +288,10 @@ const Stories = () => {
     }
   }
 
-  const renderItem = ({ item, index }: data) => {
+  const renderItem = ({ item, index }: StorysProps) => {
+    filterFeelEmojis(item.feel)
+    filterReasonEmojis(item.reason)
+    console.log('renderItem ', stories)
     return (
       <MotiView
         style={styles.listContainer}
@@ -171,7 +299,7 @@ const Stories = () => {
         animate={{ opacity: 1, translateY: 0 }}
         transition={{ delay: 1000 + index * 200 }}
       >
-        <Text style={styles.text}>{item.text}</Text>
+        <Text style={styles.text}>{item.describe}</Text>
         <View style={{ flexDirection: 'row' }}>
           <Ionicons
             style={{ top: 10, paddingLeft: 16 }}
@@ -179,7 +307,12 @@ const Stories = () => {
             size={18}
             color={'#154'}
           />
-          <Text style={styles.date}>{item.date}</Text>
+          <Text style={styles.date}>
+            {formatDistance(new Date(item.date), new Date(), {
+              locale: undefined,
+              addSuffix: true
+            })}
+          </Text>
           <View
             style={{
               flexDirection: 'row',
@@ -187,8 +320,8 @@ const Stories = () => {
               top: 7
             }}
           >
-            <Text>{item.feelEmoji}</Text>
-            <Text>{item.reasonEmoji}</Text>
+            <Text style={{ color: '#000000' }}>{feelEmoji}</Text>
+            <Text style={{ color: '#000000' }}>{reasonEmoji}</Text>
           </View>
         </View>
       </MotiView>
@@ -421,21 +554,39 @@ const Stories = () => {
                     </TouchableOpacity>
                   )}
                 </View>
-                {console.log('FEELOPTION ', optionsFeel)}
-                {console.log('REASONOPTION ', optionsReason)}
               </SafeAreaView>
               {/*   FIM MODAL   */}
             </ScrollView>
           </KeyboardAvoidingView>
         </Modal>
-        <FlatList
-          data={data}
-          // @ts-ignore
-          renderItem={renderItem}
-          keyExtractor={(item: any) => item.id}
-          numColumns={1}
-          showsVerticalScrollIndicator={false}
-        />
+        {stories.length > 0 ? (
+          <FlatList
+            data={stories}
+            // @ts-ignore
+            renderItem={renderItem}
+            keyExtractor={(item: any) => item.id}
+            numColumns={1}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <Text
+              style={{
+                color: '#000000',
+                fontSize: 20
+              }}
+            >
+              Your stories will appear here
+            </Text>
+          </View>
+        )}
       </SafeAreaView>
     </>
   )
