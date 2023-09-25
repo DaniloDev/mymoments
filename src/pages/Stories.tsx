@@ -11,7 +11,9 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  PermissionsAndroid,
+  Image
 } from 'react-native'
 import data from '../data'
 import { MotiView } from 'moti'
@@ -19,6 +21,8 @@ import { Input } from 'react-native-elements'
 import CheckBoxFeel from '../components/CheckBoxFeel'
 import CheckBoxReason from '../components/CheckBoxReason'
 //import Modal from 'react-native-modal'
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker'
+import { Base64 } from 'js-base64'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 Ionicons.loadFont
 
@@ -43,6 +47,7 @@ const Stories = () => {
   const [storyDescribe, setStoryDescribe] = useState('')
   const [placeName, setPlaceName] = useState('')
   const [disabledButtonSave, setDisabledButtonSave] = useState(true)
+  const [selectedImage, setSelectedImage] = useState(null)
   const showModal = () => setVisible(true)
   const hideModal = () => setVisible(false)
 
@@ -75,6 +80,72 @@ const Stories = () => {
     opReason7,
     opReason8
   ]
+
+  /*const checkPermission = async () => {
+    // Function to check the platform
+    // If Platform is Android then check for permissions.
+
+    if (Platform.OS === 'ios') {
+      //downloadFile()
+      //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
+    } else {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: translate('GenarateQrcode.permissions.title'),
+            message: translate('GenarateQrcode.permissions.message')
+          }
+        )
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          // Start downloading
+          // downloadFile()
+          //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
+          console.log('Storage Permission Granted.')
+          Alert.alert(
+            translate('GenarateQrcode.permissions.alerts.success.title'),
+            translate('GenarateQrcode.permissions.alerts.success.message')
+          )
+        } else {
+          // If permission denied then show alert
+          Alert.alert(
+            translate('GenarateQrcode.permissions.alerts.error.title'),
+            translate('GenarateQrcode.permissions.alerts.error.message')
+          )
+        }
+      } catch (err) {
+        // To handle permission related exception
+        console.log('++++' + err)
+      }
+    }
+  }*/
+
+  const selectImage = () => {
+    launchImageLibrary(
+      {
+        title: 'Selecione uma imagem',
+        storageOptions: {
+          //skipBackup: true,
+          path: 'images'
+        }
+      },
+      (response) => {
+        console.log('RES{ONSE', response)
+        if (response.didCancel) {
+          console.log('Seleção de imagem cancelada')
+        } else if (response.error) {
+          console.error('Erro ao selecionar imagem:', response.error)
+        } else {
+          // Obtém a imagem como base64
+          const base64Image = `data:${
+            response.assets[0].type
+          };base64,${Base64.encode(response.assets[0].uri)}`
+          setSelectedImage(response.assets[0].uri)
+          console.log(base64Image)
+        }
+      }
+    )
+  }
 
   const handleCanSave = () => {
     console.log(storyDescribe)
@@ -140,10 +211,11 @@ const Stories = () => {
         <Modal visible={visible} animationType="slide">
           <KeyboardAvoidingView
             behavior={Platform.OS == 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={80}
+            //keyboardVerticalOffset={80}
           >
             <ScrollView
-              style={{ width: '100%' }}
+              style={styles.scrollView}
+              contentContainerStyle={styles.contentContainer}
               showsVerticalScrollIndicator={false}
             >
               {/* @ts-ignore  */}
@@ -195,7 +267,7 @@ const Stories = () => {
                 >
                   <Text
                     style={{
-                      fontSize: 32,
+                      fontSize: 28,
                       fontWeight: 'bold',
                       color: '#000000'
                     }}
@@ -219,7 +291,8 @@ const Stories = () => {
                       borderRightColor: '#a7a7a7',
                       borderLeftColor: '#a7a7a7',
                       paddingLeft: 25,
-                      paddingBottom: 20
+                      paddingBottom: 20,
+                      paddingRight: 25
                     }}
                     placeholder={
                       'Describe your day in one setence. Take the time to think about waht has made your day.'
@@ -231,7 +304,7 @@ const Stories = () => {
                   />
                   <Text
                     style={{
-                      fontSize: 26,
+                      fontSize: 22,
                       fontWeight: 'bold',
                       color: '#000000'
                     }}
@@ -246,7 +319,7 @@ const Stories = () => {
 
                   <Text
                     style={{
-                      fontSize: 26,
+                      fontSize: 22,
                       fontWeight: 'bold',
                       color: '#000000'
                     }}
@@ -260,7 +333,7 @@ const Stories = () => {
                   />
                   <Text
                     style={{
-                      fontSize: 26,
+                      fontSize: 22,
                       fontWeight: 'bold',
                       color: '#000000'
                     }}
@@ -291,6 +364,62 @@ const Stories = () => {
                     multiline={false}
                     cursorColor={'#000000'}
                   />
+                  <Text
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 'bold',
+                      color: '#000000'
+                    }}
+                  >
+                    Did you capture some moments?
+                  </Text>
+
+                  {selectedImage ? (
+                    <View
+                      style={{
+                        height: 200,
+                        width: '80%',
+                        alignContent: 'center',
+                        alignItems: 'center',
+                        top: 10,
+                        bottom: 6,
+                        elevation: 5
+                      }}
+                    >
+                      <Image
+                        source={{ uri: selectedImage }}
+                        style={{
+                          height: 200,
+                          width: '80%',
+                          left: 30,
+                          borderRadius: 6,
+                          bottom: 5
+                        }}
+                      />
+                    </View>
+                  ) : (
+                    <TouchableOpacity onPress={() => selectImage()}>
+                      <View
+                        style={{
+                          //backgroundColor: '#dddddda7',
+                          elevation: 8,
+                          backgroundColor: '#ffffff',
+                          alignItems: 'center',
+                          alignContent: 'center',
+                          width: 80,
+                          height: 80,
+                          padding: 12,
+                          top: 8,
+                          left: 120,
+                          borderRadius: 6,
+                          borderColor: '#000000'
+                        }}
+                      >
+                        <Ionicons name="image" size={30} color={'#000000'} />
+                        <Text>Add</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
                 </View>
                 {console.log('FEELOPTION ', optionsFeel)}
                 {console.log('REASONOPTION ', optionsReason)}
@@ -366,5 +495,14 @@ const styles = StyleSheet.create({
     bottom: 14,
     top: 14,
     elevation: 3
+  },
+  scrollView: {
+    width: '100%'
+  },
+  contentContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    paddingBottom: 50
   }
 })
