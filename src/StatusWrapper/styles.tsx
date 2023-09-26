@@ -46,20 +46,41 @@ const styles = StyleSheet.create({
     maxHeight: '100%',
     justifyContent: 'center',
     alignContent: 'center',
-    alignItems: 'stretch',
-    paddingLeft: 50
+    alignItems: 'stretch'
   },
   textDecribeWithImage: {
     color: '#ffffff',
-    left: 25
+    left: 40,
+    paddingBottom: 8
   },
 
-  textDecribeWithOutImage: {},
+  textDecribeWithOutImage: {
+    color: '#ffffff',
+    left: 40,
+    paddingBottom: 8
+  },
 
-  date: {
+  dateWithImage: {
     color: '#bbbbbb',
-    left: 25,
-    bottom: 2
+    left: 40,
+    bottom: 2,
+    paddingBottom: 4
+  },
+  dateWithOutImage: {
+    color: '#bbbbbb',
+    left: 40,
+    bottom: 2,
+    paddingBottom: 4
+  },
+  placeWithImage: {
+    color: '#eb705f',
+    left: 40,
+    paddingBottom: 4
+  },
+  placeWithOutImage: {
+    color: '#eb705f',
+    left: 40,
+    paddingBottom: 4
   },
   emojiViewContainer: {
     display: 'flex',
@@ -67,7 +88,7 @@ const styles = StyleSheet.create({
   },
   emojisView: {
     top: 8,
-    left: 20,
+    left: 38,
     width: 120,
     marginBottom: 8,
     height: 36,

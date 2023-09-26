@@ -188,7 +188,7 @@ const Stories = (props) => {
   }
 
   const selectImage = () => {
-    launchImageLibrary(
+    launchCamera(
       {
         title: 'Selecione uma imagem',
         storageOptions: {
@@ -425,7 +425,7 @@ const Stories = (props) => {
                     onChangeText={(str) => setStoryDescribe(str)}
                     multiline={true}
                     cursorColor={'#000000'}
-                    maxLength={50}
+                    maxLength={74}
                     autoCapitalize={'none'}
                   />
                   <Text

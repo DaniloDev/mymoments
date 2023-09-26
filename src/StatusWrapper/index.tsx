@@ -137,6 +137,7 @@ const StatusWrapper = ({ statusData, visible, onClose = false }) => {
               color={'#ffffff'}
             />
           </TouchableOpacity>
+
           <View
             style={[
               current.data.image?.length > 0
@@ -152,16 +153,37 @@ const StatusWrapper = ({ statusData, visible, onClose = false }) => {
               />
             )}
 
-            <Text style={styles.date}>
-              {format(current.data.date, 'EEEE MMMM dd  yyyy')}
+            <Text
+              style={[
+                current.data.image?.length > 0
+                  ? styles.dateWithImage
+                  : styles.dateWithOutImage
+              ]}
+            >
+              {format(current.data.date, 'EEEE, MMM dd, yyyy')}
             </Text>
-            <Text style={styles.textDecribeWithImage}>
-              {current.data.describe.length > 49
-                ? current.data.describe.substr(0, 49) +
-                  '\n' +
-                  '\r' +
-                  current.data.describe.substr(49, current.data.describe.length)
+            <Text
+              style={[
+                current.data.image?.length > 0
+                  ? styles.textDecribeWithImage
+                  : styles.textDecribeWithOutImage
+              ]}
+            >
+              {current.data.describe.length > 48
+                ? current.data.describe.substr(0, 48) +
+                  '\n\b' +
+                  current.data.describe.substr(48, current.data.describe.length)
                 : current.data.describe}
+            </Text>
+
+            <Text
+              style={[
+                current.data.image?.length > 0
+                  ? styles.placeWithImage
+                  : styles.placeWithOutImage
+              ]}
+            >
+              {current.data.placeName}
             </Text>
             <View style={styles.emojiViewContainer}>
               <View style={styles.emojisView}>
