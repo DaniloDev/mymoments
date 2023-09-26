@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import {
   StyleSheet,
   Text,
@@ -17,17 +17,12 @@ import {
   Keyboard,
   LogBox
 } from 'react-native'
-//import data from '../data'
-
-import { format, formatDistance } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { formatDistance } from 'date-fns'
 import { MotiView } from 'moti'
 import { Input } from 'react-native-elements'
 import CheckBoxFeel from '../components/CheckBoxFeel'
 import CheckBoxReason from '../components/CheckBoxReason'
-//import Modal from 'react-native-modal'
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker'
-import { Base64 } from 'js-base64'
 import { StorysProps } from '../models/Stories.interface'
 import getRealm from '../services/realm'
 import { getID } from '../utils/functions'
@@ -35,24 +30,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { useIsFocused } from '@react-navigation/native'
 import RNFS from 'react-native-fs'
 import Ionicons from 'react-native-vector-icons/Ionicons'
-
 Ionicons.loadFont
-
-/*interface data {
-  item: {
-    id: number
-    text: string
-    date: string
-    month: string
-    feelCategory: string
-    feel: string
-    feelEmoji: string
-    reason: string
-    reasonEmoji: string
-    image: string
-  }
-  index: number
-}*/
 
 LogBox.ignoreAllLogs(true)
 
@@ -161,14 +139,7 @@ const Stories = (props) => {
         { text: '😊', id: 'pretty_good' },
         { text: '😐', id: 'quite_ok' },
         { text: '😔', id: 'kind_of_bad' },
-        { text: '😥', id: 'horrible' },
-        { text: '👪', id: 'family' },
-        { text: '🍲', id: 'food' },
-        { text: '👬', id: 'friends' },
-        { text: '👨🏼‍⚕️', id: 'health' },
-        { text: '🪂', id: 'sport' },
-        { text: '💼', id: 'work' },
-        { text: '❤️', id: 'relationship' }
+        { text: '😥', id: 'horrible' }
       ]
 
       let sendFeelEmojis = feelEmojis.filter((element) => element.id === id)
@@ -303,46 +274,48 @@ const Stories = (props) => {
   const renderItem = ({ item, index }: StorysProps) => {
     console.log('renderItem ', stories)
     return (
-      <MotiView
-        style={styles.listContainer}
-        from={{ opacity: 0, translateY: 50 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ delay: 1000 + index * 200 }}
-      >
-        <Text style={styles.text}>
-          {item.describe.toString().legth <= 40
-            ? item.describe
-            : item.describe.toString().substr(0, 37) + '...'}
-        </Text>
-        <View style={{ flexDirection: 'row' }}>
-          <Ionicons
-            style={{ top: 10, paddingLeft: 16 }}
-            name="calendar-sharp"
-            size={18}
-            color={'#154'}
-          />
-          <Text style={styles.date}>
-            {formatDistance(new Date(item.date), new Date(), {
-              locale: undefined,
-              addSuffix: false
-            })}
+      <TouchableOpacity onPress={() => console.log('LONG PRESS')}>
+        <MotiView
+          style={styles.listContainer}
+          from={{ opacity: 0, translateY: 50 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ delay: 1000 + index * 200 }}
+        >
+          <Text style={styles.text}>
+            {item.describe.toString().legth <= 40
+              ? item.describe
+              : item.describe.toString().substr(0, 37) + '...'}
           </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              left: 130,
-              top: 7
-            }}
-          >
-            <Text style={{ color: '#000000' }}>
-              {filterFeelEmojis(item.feel)}
+          <View style={{ flexDirection: 'row' }}>
+            <Ionicons
+              style={{ top: 10, paddingLeft: 16 }}
+              name="calendar-sharp"
+              size={18}
+              color={'#154'}
+            />
+            <Text style={styles.date}>
+              {formatDistance(new Date(item.date), new Date(), {
+                locale: undefined,
+                addSuffix: false
+              })}
             </Text>
-            <Text style={{ color: '#000000' }}>
-              {filterReasonEmojis(item.reason)}
-            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                left: 130,
+                top: 7
+              }}
+            >
+              <Text style={{ color: '#000000' }}>
+                {filterFeelEmojis(item.feel)}
+              </Text>
+              <Text style={{ color: '#000000' }}>
+                {filterReasonEmojis(item.reason)}
+              </Text>
+            </View>
           </View>
-        </View>
-      </MotiView>
+        </MotiView>
+      </TouchableOpacity>
     )
   }
   return (
@@ -452,6 +425,8 @@ const Stories = (props) => {
                     onChangeText={(str) => setStoryDescribe(str)}
                     multiline={true}
                     cursorColor={'#000000'}
+                    maxLength={50}
+                    autoCapitalize={'none'}
                   />
                   <Text
                     style={{

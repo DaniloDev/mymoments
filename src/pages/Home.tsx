@@ -237,7 +237,7 @@ const Home = ({ navigation, props }: any) => {
         <StatusWrapper
           statusData={goodTimes}
           visible={visibleGoodStories}
-          onClose={(data) => setVisibleGoodStories(false)}
+          //onClose={(data) => setVisibleGoodStories(false)}
         />
       )}
 
@@ -245,7 +245,7 @@ const Home = ({ navigation, props }: any) => {
         <StatusWrapper
           statusData={routherTimes}
           visible={visibleRougherStories}
-          onClose={(data) => setVisibleRougherStories(false)}
+          // onClose={(data) => setVisibleRougherStories(false)}
         />
       )}
     </>

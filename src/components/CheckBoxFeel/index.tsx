@@ -71,10 +71,10 @@ const styles = StyleSheet.create({
     color: '#0000'
   },
   touchable: {
-    width: 110,
+    width: 169,
     marginBottom: 8,
-    height: 30,
-    borderRadius: 4,
+    height: 36,
+    borderRadius: 6,
     borderWidth: 2,
     elevation: 3,
     backgroundColor: '#ffffff',
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   },
   optext: {
     color: '#555',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     padding: 5,
     textAlign: 'center'

@@ -9,8 +9,14 @@ export default class StorySchema extends Realm.Object {
       describe: 'string',
       feel: 'string',
       reason: 'string',
-      placeName: 'string',
-      image: 'string',
+      placeName: {
+        type: 'string',
+        optional: true
+      },
+      image: {
+        type: 'string',
+        optional: true
+      },
       date: 'date',
       emojiCategory: 'string'
     }
