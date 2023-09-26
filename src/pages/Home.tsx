@@ -1,18 +1,28 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { View, Text, StyleSheet, Image, Alert } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import getRealm from '../services/realm'
-import Ionicons from 'react-native-vector-icons/Ionicons'
+
 import { StorysProps } from '../models/Stories.interface'
+import StatusWrapper from '../StatusWrapper'
+
+import { useFocusEffect } from '@react-navigation/native'
+import { useIsFocused } from '@react-navigation/native'
+import Ionicons from 'react-native-vector-icons/Ionicons'
 Ionicons.loadFont
 
-const Home = ({ navigation }: any) => {
+const Home = ({ navigation, props }: any) => {
   const [daylyMotivation, setDaylyMotivation] = useState('')
   const [goodTimes, setGoodTimes] = useState<StorysProps[]>([])
   const [routherTimes, setRoutherTimes] = useState<StorysProps[]>([])
+  const [visibleGoodStories, setVisibleGoodStories] = useState(false)
+  const [visibleRougherStories, setVisibleRougherStories] = useState(false)
+
+  const isFocused = useIsFocused()
 
   const getGoodTimes = async () => {
+    setVisibleGoodStories(true)
     const realm = await getRealm()
 
     try {
@@ -26,15 +36,20 @@ const Home = ({ navigation }: any) => {
       console.log(' GOOD TIMES ', response)
       console.log(' GOOD TIMES LENGTH ', response.length)
       setGoodTimes(response)
+      //console.log('allStories in getGoodTimes ', allStories)
+      if (response.length === 0) {
+        Alert.alert('Warning', 'There are no good times yet')
+      }
     } catch (error) {
       console.log(error)
-      Alert.alert('Good Times', 'ERROR in Good Times')
+      // Alert.alert('Good Times', 'ERROR in Good Times')
     } finally {
-      realm.close()
+      //realm.close()
     }
   }
 
   const getRougherTimes = async () => {
+    setVisibleRougherStories(true)
     const realm = await getRealm()
 
     try {
@@ -47,15 +62,18 @@ const Home = ({ navigation }: any) => {
 
       console.log(' ROUGHER TIMES ', response)
       console.log(' ROUGHER TIMES LENGTH ', response.length)
-      setGoodTimes(response)
+      setRoutherTimes(response)
+
+      if (response.length === 0) {
+        Alert.alert('Warning', 'There are no rougher times yet')
+      }
     } catch (error) {
       console.log(error)
-      Alert.alert('Rougher Times', 'ERROR in Rougher Times')
+      // Alert.alert('Rougher Times', 'ERROR in Rougher Times')
     } finally {
-      realm.close()
+      //   realm.close()
     }
   }
-
   return (
     <>
       <View style={{ backgroundColor: '#ffffff' }}>
@@ -214,6 +232,22 @@ const Home = ({ navigation }: any) => {
           </View>
         </View>
       </View>
+
+      {visibleGoodStories && goodTimes.length > 0 && (
+        <StatusWrapper
+          statusData={goodTimes}
+          visible={visibleGoodStories}
+          onClose={(data) => setVisibleGoodStories(false)}
+        />
+      )}
+
+      {visibleRougherStories && routherTimes.length > 0 && (
+        <StatusWrapper
+          statusData={routherTimes}
+          visible={visibleRougherStories}
+          onClose={(data) => setVisibleRougherStories(false)}
+        />
+      )}
     </>
   )
 }

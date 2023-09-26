@@ -33,6 +33,7 @@ import getRealm from '../services/realm'
 import { getID } from '../utils/functions'
 import { useFocusEffect } from '@react-navigation/native'
 import { useIsFocused } from '@react-navigation/native'
+import RNFS from 'react-native-fs'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 
 Ionicons.loadFont
@@ -99,44 +100,45 @@ const Stories = (props) => {
     opReason8
   ]
 
-  /*const checkPermission = async () => {
+  const getAndSetImage = () => {
+    checkPermission()
+  }
+  const checkPermission = async () => {
     // Function to check the platform
     // If Platform is Android then check for permissions.
 
     if (Platform.OS === 'ios') {
       //downloadFile()
       //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
+      selectImage()
     } else {
       try {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
           {
-            title: translate('GenarateQrcode.permissions.title'),
-            message: translate('GenarateQrcode.permissions.message')
+            title: 'Permisson',
+            message: 'We need permissson to that!'
           }
         )
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           // Start downloading
           // downloadFile()
           //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
-          console.log('Storage Permission Granted.')
-          Alert.alert(
+          selectImage()
+          //console.log('Storage Permission Granted.')
+          /*Alert.alert(
             translate('GenarateQrcode.permissions.alerts.success.title'),
             translate('GenarateQrcode.permissions.alerts.success.message')
-          )
+          )*/
         } else {
-          // If permission denied then show alert
-          Alert.alert(
-            translate('GenarateQrcode.permissions.alerts.error.title'),
-            translate('GenarateQrcode.permissions.alerts.error.message')
-          )
+          Alert.alert('error', 'errro message')
         }
       } catch (err) {
         // To handle permission related exception
-        console.log('++++' + err)
+        //   console.log('++++' + err)
       }
     }
-  }*/
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -230,13 +232,15 @@ const Stories = (props) => {
         } else if (response.error) {
           console.error('Erro ao selecionar imagem:', response.error)
         } else {
-          // Obtém a imagem como base64
-          const base64Image = `data:${
-            response.assets[0].type
-          };base64,${Base64.encode(response.assets[0].uri)}`
+          console.log('RESPONSE IN selectImage ', response)
           setSelectedImage(response.assets[0].uri)
-          setImageInBase64(base64Image)
-          console.log(base64Image)
+          const imagePath = response.assets[0].originalPath
+          RNFS.readFile(imagePath, 'base64').then((base64String) => {
+            setImageInBase64(
+              `data:${response.assets[0].type};base64,${base64String}`
+            )
+            console.log('IMAGEINBASE64 ', imageInBase64)
+          })
         }
       }
     )
@@ -545,7 +549,7 @@ const Stories = (props) => {
                       />
                     </View>
                   ) : (
-                    <TouchableOpacity onPress={() => selectImage()}>
+                    <TouchableOpacity onPress={() => getAndSetImage()}>
                       <View
                         style={{
                           //backgroundColor: '#dddddda7',
