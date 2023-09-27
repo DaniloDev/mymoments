@@ -1,4 +1,4 @@
-package com.mymoments;
+package com.developtecnologia.mymoments;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;

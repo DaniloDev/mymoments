@@ -92,7 +92,7 @@ const Stories = (props) => {
     } else {
       try {
         const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
           {
             title: 'Permisson',
             message: 'We need permissson to that!'
@@ -108,6 +108,8 @@ const Stories = (props) => {
             translate('GenarateQrcode.permissions.alerts.success.title'),
             translate('GenarateQrcode.permissions.alerts.success.message')
           )*/
+          console.log('Storage Permission Granted.')
+          Alert.alert('Success', 'Permmison to acess storage')
         } else {
           Alert.alert('error', 'errro message')
         }
@@ -187,8 +189,8 @@ const Stories = (props) => {
     })
   }
 
-  const selectImage = () => {
-    launchCamera(
+  const selectImage = async () => {
+    launchImageLibrary(
       {
         title: 'Selecione uma imagem',
         storageOptions: {
@@ -425,7 +427,7 @@ const Stories = (props) => {
                     onChangeText={(str) => setStoryDescribe(str)}
                     multiline={true}
                     cursorColor={'#000000'}
-                    maxLength={74}
+                    maxLength={50}
                     autoCapitalize={'none'}
                   />
                   <Text
