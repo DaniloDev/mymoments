@@ -34,14 +34,17 @@ Ionicons.loadFont
 
 LogBox.ignoreAllLogs(true)
 
-const Stories = (props) => {
+const Stories = (props: any) => {
   const [visible, setVisible] = useState(false)
   const [storyDescribe, setStoryDescribe] = useState('')
   const [placeName, setPlaceName] = useState('')
   const [disabledButtonSave, setDisabledButtonSave] = useState(true)
   const [selectedImage, setSelectedImage] = useState(null)
+  const [selectedImageAux, setSelectedImageAux] = useState(null)
   const [imageInBase64, setImageInBase64] = useState(null)
   const [stories, setStories] = useState<StorysProps[]>([])
+
+  const [idEdit, setIdEdit] = useState(null)
 
   const showModal = () => setVisible(true)
   const hideModal = () => setVisible(false)
@@ -62,9 +65,12 @@ const Stories = (props) => {
   const opReason3 = { text: '👬 Friends', id: 'friends' }
   const opReason4 = { text: '👨🏼‍⚕️ Health', id: 'health' }
   const opReason5 = { text: '🪂 Hobbies', id: 'hobbies' }
-  const opReason7 = { text: '🚴 Sport', id: 'sport' }
-  const opReason8 = { text: '💼 Work', id: 'work' }
-  const opReason6 = { text: '❤️ Relationship', id: 'relationship' }
+  const opReason6 = { text: '🚴 Sport', id: 'sport' }
+  const opReason7 = { text: '💼 Work', id: 'work' }
+  const opReason8 = {
+    text: '❤️ Relation' + '\n' + 'ship',
+    id: 'relationship'
+  }
 
   const optionsFeelMultiple = [opFeel1, opFeel2, opFeel3, opFeel4, opFeel5]
   const optionsReasonMultiple = [
@@ -111,7 +117,30 @@ const Stories = (props) => {
           console.log('Storage Permission Granted.')
           Alert.alert('Success', 'Permmison to acess storage')
         } else {
-          Alert.alert('error', 'errro message')
+          try {
+            const granted = await PermissionsAndroid.request(
+              PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+              {
+                title: 'Permisson',
+                message: 'We need permissson to that!'
+              }
+            )
+            if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+              // Start downloading
+              // downloadFile()
+              //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
+              selectImage()
+              //console.log('Storage Permission Granted.')
+              /*Alert.alert(
+                  translate('GenarateQrcode.permissions.alerts.success.title'),
+                  translate('GenarateQrcode.permissions.alerts.success.message')
+                )*/
+              console.log('Storage Permission Granted.')
+              Alert.alert('Success', 'Permmison to acess storage')
+            } else {
+              Alert.alert('Error', 'Some Error here')
+            }
+          } catch (error) {}
         }
       } catch (err) {
         // To handle permission related exception
@@ -127,7 +156,23 @@ const Stories = (props) => {
         const realm = await getRealm()
         const data = realm.objects(dbName)
         setStories(data)
-        console.log('STORIES', stories)
+        // console.log('STORIES', stories)
+
+        if (props.route.params.storyEdit[0].id.toString().length > 0) {
+          setIdEdit(props.route.params.storyEdit[0].id)
+          setStoryDescribe(props.route.params.storyEdit[0].describe)
+          setOptionsFeel(props.route.params.storyEdit[0].feel)
+          setOptionsReason(props.route.params.storyEdit[0].reason)
+          setPlaceName(props.route.params.storyEdit[0].placeName)
+          setSelectedImage(props.route.params.storyEdit[0].image)
+          setSelectedImageAux(props.route.params.storyEdit[0].image)
+          showModal()
+
+          console.log(
+            'props.route.params.storyEdit[0].id.toString().length',
+            props.route.params.storyEdit[0].id.toString().length
+          )
+        }
       }
 
       loadStories()
@@ -199,20 +244,22 @@ const Stories = (props) => {
         }
       },
       (response) => {
-        console.log('RES{ONSE', response)
+        // console.log('RES{ONSE', response)
         if (response.didCancel) {
           console.log('Seleção de imagem cancelada')
+          setSelectedImage(selectedImageAux)
         } else if (response.error) {
           console.error('Erro ao selecionar imagem:', response.error)
         } else {
           console.log('RESPONSE IN selectImage ', response)
           setSelectedImage(response.assets[0].uri)
+          setSelectedImageAux(response.assets[0].uri)
           const imagePath = response.assets[0].originalPath
           RNFS.readFile(imagePath, 'base64').then((base64String) => {
             setImageInBase64(
               `data:${response.assets[0].type};base64,${base64String}`
             )
-            console.log('IMAGEINBASE64 ', imageInBase64)
+            // console.log('IMAGEINBASE64 ', imageInBase64)
           })
         }
       }
@@ -232,8 +279,9 @@ const Stories = (props) => {
   }
 
   const handleCanSave = async () => {
-    console.log(storyDescribe)
-    console.log(optionsFeel)
+    //  console.log(storyDescribe)
+    console.log('optionsFeel ', optionsFeel)
+    console.log('optionsReason ', optionsReason)
     if (
       storyDescribe.trim().toString().length >= 6 &&
       optionsFeel.toString().length > 0
@@ -273,10 +321,61 @@ const Stories = (props) => {
     }
   }
 
+  const updateStory = async () => {
+    if (idEdit === null) {
+      Alert.alert('Você não pode editar!')
+      return
+    }
+
+    const emojiCategory = checkCategoryToTheMoment(optionsFeel[0])
+
+    const realm = await getRealm()
+    const dbName = 'Story'
+    const response = {
+      id: idEdit,
+      describe: storyDescribe,
+      feel: optionsFeel[0],
+      reason: optionsReason[0],
+      placeName: placeName,
+      image: imageInBase64,
+      date: new Date(),
+      emojiCategory: emojiCategory
+    }
+
+    await realm.write(() => {
+      realm.create(dbName, response, 'modified')
+    })
+
+    setStoryDescribe('')
+    setOptionsFeel([])
+    setOptionsReason([])
+    setPlaceName('')
+    setSelectedImage(null)
+    setImageInBase64(null)
+    hideModal()
+    Keyboard.dismiss()
+  }
+
   const renderItem = ({ item, index }: StorysProps) => {
-    console.log('renderItem ', stories)
+    //console.log('renderItem ', stories)
     return (
-      <TouchableOpacity onPress={() => console.log('LONG PRESS')}>
+      <TouchableOpacity
+        onPress={() =>
+          props.navigation.navigate('StoryView', {
+            story: [
+              {
+                id: item.id,
+                image: item.image,
+                date: item.date,
+                describe: item.describe,
+                placeName: item.placeName,
+                feel: item.feel,
+                reason: item.reason
+              }
+            ]
+          })
+        }
+      >
         <MotiView
           style={styles.listContainer}
           from={{ opacity: 0, translateY: 50 }}
@@ -357,6 +456,13 @@ const Stories = (props) => {
                     onPress={() => {
                       hideModal()
                       setStoryDescribe('')
+                      setOptionsFeel([])
+                      setOptionsReason([])
+                      setPlaceName('')
+                      setSelectedImage(null)
+                      setSelectedImageAux(null)
+                      setImageInBase64(null)
+                      setIdEdit(null)
                     }}
                   >
                     <Text
@@ -368,19 +474,35 @@ const Stories = (props) => {
                       Cancel
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => handleCanSave()}
-                    // disabled={disabledButtonSave}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 18
-                        //color: disabledButtonSave ? '#7673737e' : '#000000'
-                      }}
+                  {idEdit !== null ? (
+                    <TouchableOpacity
+                      onPress={() => updateStory()}
+                      // disabled={disabledButtonSave}
                     >
-                      Save
-                    </Text>
-                  </TouchableOpacity>
+                      <Text
+                        style={{
+                          fontSize: 18
+                          //color: disabledButtonSave ? '#7673737e' : '#000000'
+                        }}
+                      >
+                        Update
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() => handleCanSave()}
+                      // disabled={disabledButtonSave}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 18
+                          //color: disabledButtonSave ? '#7673737e' : '#000000'
+                        }}
+                      >
+                        Save
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </SafeAreaView>
                 {/* @ts-ignore */}
                 <View
@@ -443,13 +565,15 @@ const Stories = (props) => {
                     options={optionsFeelMultiple}
                     onChange={(op) => setOptionsFeel(op)}
                     multiple={false}
+                    option={idEdit !== null ? [optionsFeel] : null}
                   />
 
                   <Text
                     style={{
                       fontSize: 22,
                       fontWeight: 'bold',
-                      color: '#000000'
+                      color: '#000000',
+                      top: 20
                     }}
                   >
                     What was the reason?
@@ -458,12 +582,15 @@ const Stories = (props) => {
                     options={optionsReasonMultiple}
                     onChange={(op) => setOptionsReason(op)}
                     multiple={false}
+                    option={idEdit !== null ? [optionsReason] : null}
                   />
                   <Text
                     style={{
                       fontSize: 22,
                       fontWeight: 'bold',
-                      color: '#000000'
+                      color: '#000000',
+                      top: 30,
+                      paddingBottom: 20
                     }}
                   >
                     Was thre a special place?
@@ -478,6 +605,7 @@ const Stories = (props) => {
                       borderRadius: 6,
                       right: 0,
                       left: 0,
+
                       elevation: 0,
                       borderTopColor: '#a7a7a7',
                       borderBottomColor: '#a7a7a7',
@@ -489,8 +617,9 @@ const Stories = (props) => {
                     placeholder={'type a place name'}
                     value={placeName}
                     onChangeText={(str) => setPlaceName(str)}
-                    multiline={false}
+                    multiline={true}
                     cursorColor={'#000000'}
+                    maxLength={40}
                   />
                   <Text
                     style={{
@@ -511,9 +640,19 @@ const Stories = (props) => {
                         alignItems: 'center',
                         top: 10,
                         bottom: 6,
-                        elevation: 5
+                        elevation: 5,
+                        flexDirection: 'row'
                       }}
                     >
+                      <TouchableOpacity onPress={() => setSelectedImage(null)}>
+                        <Text style={{ top: 10, paddingLeft: 16 }}>
+                          <Ionicons
+                            name="close-circle"
+                            size={24}
+                            color={'#000000'}
+                          />
+                        </Text>
+                      </TouchableOpacity>
                       <Image
                         source={{ uri: selectedImage }}
                         style={{

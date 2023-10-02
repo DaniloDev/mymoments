@@ -9,7 +9,12 @@ import {
 import { calculateNewMassToMatchDuration } from 'react-native-reanimated/lib/typescript/reanimated2/animation/springUtils'
 import Icon from 'react-native-vector-icons/dist/MaterialCommunityIcons'
 
-const CheckBoxFeel = ({ options = [], onChange, multiple = false }) => {
+const CheckBoxFeel = ({
+  options = [],
+  onChange,
+  multiple = false,
+  option = null
+}) => {
   const [selected, setSelected] = useState([])
   let arrSelecteds = [...selected]
   const toggle = (id: any) => {
@@ -20,6 +25,24 @@ const CheckBoxFeel = ({ options = [], onChange, multiple = false }) => {
     } else {
       multiple ? arrSelecteds.push(id) : (arrSelecteds = [id])
     }
+    setSelected(arrSelecteds)
+  }
+
+  useEffect(() => {
+    getConfigs()
+  }, [])
+
+  const getConfigs = async () => {
+    let selecionados = option
+
+    console.log('SELECIONADOS ', selecionados)
+
+    if (selecionados !== null && selecionados !== undefined) {
+      for (let i = 0; i < selecionados.length; i++) {
+        arrSelecteds.push(selecionados[i])
+      }
+    }
+
     setSelected(arrSelecteds)
   }
 
@@ -36,17 +59,20 @@ const CheckBoxFeel = ({ options = [], onChange, multiple = false }) => {
                 borderWidth:
                   // selected.findIndex(i => i === op.id) !== -1 || op.id === i18next.language
                   selected.findIndex((i) => i === op.id) !== -1 ? 1 : 1,
-
                 borderColor:
                   selected.findIndex((i) => i === op.id) !== -1
-                    ? '#000'
-                    : 'transparent'
+                    ? 'transparent'
+                    : 'transparent',
+                backgroundColor:
+                  selected.findIndex((i) => i === op.id) !== -1
+                    ? '#bbbbbb'
+                    : '#f0f0f0f6'
               }
             ]}
             onPress={() => toggle(op?.id)}
           >
             {selected.findIndex((i) => i === op.id) !== -1 ? (
-              <Text style={styles.optext}>{op?.text}</Text>
+              <Text style={styles.optextTouchable}>{op?.text}</Text>
             ) : (
               <Text style={styles.optext}>{op?.text}</Text>
             )}
@@ -71,16 +97,28 @@ const styles = StyleSheet.create({
     color: '#0000'
   },
   touchable: {
-    width: 169,
+    top: 10,
+
+    width: Dimensions.get('screen').width - 500,
     marginBottom: 8,
-    height: 36,
+    height: 40,
     borderRadius: 6,
     borderWidth: 2,
     elevation: 3,
     backgroundColor: '#ffffff',
     borderColor: '#000000',
     color: '#555',
-    marginRight: 8
+    marginRight: 8,
+    alignContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  optextTouchable: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+    paddingRight: 5,
+    textAlign: 'center'
   },
   optext: {
     color: '#555',

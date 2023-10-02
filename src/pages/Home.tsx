@@ -12,7 +12,7 @@ import { useIsFocused } from '@react-navigation/native'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 Ionicons.loadFont
 
-const Home = ({ navigation, props }: any) => {
+const Home = ({ navigation }: any) => {
   const [daylyMotivation, setDaylyMotivation] = useState('')
   const [goodTimes, setGoodTimes] = useState<StorysProps[]>([])
   const [routherTimes, setRoutherTimes] = useState<StorysProps[]>([])
@@ -77,7 +77,19 @@ const Home = ({ navigation, props }: any) => {
   return (
     <>
       <View style={{ backgroundColor: '#ffffff' }}>
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('configs', {
+              users: [
+                {
+                  name: 'Danilo Santos Nascimento',
+                  email: 'danisn2010@gmail.com',
+                  cpf: '857.734.645-51'
+                }
+              ]
+            })
+          }
+        >
           <Text style={{ textAlign: 'right', right: 20 }}>
             <MaterialIcons name="settings" size={25} color={'#000000'} />
           </Text>
@@ -237,7 +249,7 @@ const Home = ({ navigation, props }: any) => {
         <StatusWrapper
           statusData={goodTimes}
           visible={visibleGoodStories}
-          //onClose={(data) => setVisibleGoodStories(false)}
+          onClose={(data: Boolean) => setVisibleGoodStories(false)}
         />
       )}
 
@@ -245,7 +257,7 @@ const Home = ({ navigation, props }: any) => {
         <StatusWrapper
           statusData={routherTimes}
           visible={visibleRougherStories}
-          // onClose={(data) => setVisibleRougherStories(false)}
+          onClose={(data: Boolean) => setVisibleRougherStories(false)}
         />
       )}
     </>

@@ -18,7 +18,17 @@ import { ptBR } from 'date-fns/locale'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 Ionicons.loadFont
 
-const StatusWrapper = ({ statusData, visible, onClose = false }) => {
+interface statusWrapperProps {
+  statusData: any
+  visible: Boolean
+  onClose: any
+}
+
+const StatusWrapper = ({
+  statusData,
+  visible,
+  onClose
+}: statusWrapperProps) => {
   // const [visible, setVisible] = useState(true);
   const width = Dimensions.get('screen').width
   const height = Dimensions.get('screen').height
@@ -27,8 +37,7 @@ const StatusWrapper = ({ statusData, visible, onClose = false }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (current.index === statusData.length - 1) {
-        // return onClose(true)
-        return
+        return onClose(true)
       }
       setCurrent({
         ...current,
@@ -169,10 +178,10 @@ const StatusWrapper = ({ statusData, visible, onClose = false }) => {
                   : styles.textDecribeWithOutImage
               ]}
             >
-              {current.data.describe.length > 48
-                ? current.data.describe.substr(0, 48) +
-                  '\n\b' +
-                  current.data.describe.substr(48, current.data.describe.length)
+              {current.data.describe.length > 40
+                ? current.data.describe.substr(0, 40) +
+                  '\n' +
+                  current.data.describe.substr(40, current.data.describe.length)
                 : current.data.describe}
             </Text>
 

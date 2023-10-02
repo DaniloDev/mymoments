@@ -9,7 +9,12 @@ import {
 import { calculateNewMassToMatchDuration } from 'react-native-reanimated/lib/typescript/reanimated2/animation/springUtils'
 import Icon from 'react-native-vector-icons/dist/MaterialCommunityIcons'
 
-const CheckBoxReason = ({ options = [], onChange, multiple = false }) => {
+const CheckBoxReason = ({
+  options = [],
+  onChange,
+  multiple = false,
+  option = null
+}) => {
   const [selected, setSelected] = useState([])
   let arrSelecteds = [...selected]
   const toggle = (id: any) => {
@@ -20,6 +25,24 @@ const CheckBoxReason = ({ options = [], onChange, multiple = false }) => {
     } else {
       multiple ? arrSelecteds.push(id) : (arrSelecteds = [id])
     }
+    setSelected(arrSelecteds)
+  }
+
+  useEffect(() => {
+    getConfigs()
+  }, [])
+
+  const getConfigs = async () => {
+    let selecionados = option
+
+    console.log('SELECIONADOS ', selecionados)
+
+    if (selecionados !== null && selecionados !== undefined) {
+      for (let i = 0; i < selecionados.length; i++) {
+        arrSelecteds.push(selecionados[i])
+      }
+    }
+
     setSelected(arrSelecteds)
   }
 
@@ -39,14 +62,19 @@ const CheckBoxReason = ({ options = [], onChange, multiple = false }) => {
 
                 borderColor:
                   selected.findIndex((i) => i === op.id) !== -1
-                    ? '#000'
-                    : 'transparent'
+                    ? 'transparent'
+                    : 'transparent',
+
+                backgroundColor:
+                  selected.findIndex((i) => i === op.id) !== -1
+                    ? '#bbbbbb'
+                    : '#f0f0f0f6'
               }
             ]}
             onPress={() => toggle(op?.id)}
           >
             {selected.findIndex((i) => i === op.id) !== -1 ? (
-              <Text style={styles.optext}>{op?.text}</Text>
+              <Text style={styles.optextTouchable}>{op?.text}</Text>
             ) : (
               <Text style={styles.optext}>{op?.text}</Text>
             )}
@@ -71,22 +99,33 @@ const styles = StyleSheet.create({
     color: '#0000'
   },
   touchable: {
-    width: 170,
+    top: 28,
+    width: Dimensions.get('screen').width - 290,
     marginBottom: 8,
-    height: 36,
+    height: 40,
     borderRadius: 6,
     borderWidth: 2,
     elevation: 3,
     backgroundColor: '#ffffff',
     borderColor: '#000000',
     color: '#555',
-    marginRight: 7
+    marginRight: 7,
+    alignContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  optextTouchable: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+    paddingRight: 5,
+    textAlign: 'center'
   },
   optext: {
     color: '#555',
     fontSize: 15,
     fontWeight: '600',
-    padding: 5,
+    paddingRight: 5,
     textAlign: 'center'
   }
 })

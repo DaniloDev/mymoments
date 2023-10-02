@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+  <cloud-backup>
+    <!-- your rules -->
+    <include domain="file" path="./default.realm" />
+<include domain="file" path="./default.realm.lock" />
+<include domain="file" path="./default.realm.management" />
+<include domain="file" path="./default.realm.note" />
+
+  </cloud-backup>
+  <device-transfer>
+    <!-- your rules -->
+    <include domain="file" path="./default.realm" />
+<include domain="file" path="./default.realm.lock" />
+<include domain="file" path="./default.realm.management" />
+<include domain="file" path="./default.realm.note" />
+  </device-transfer>
+</data-extraction-rules>
