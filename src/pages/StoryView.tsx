@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   emojisView: {
     top: 8,
     left: 38,
-    width: 120,
+    width: 122,
     marginBottom: 8,
     height: 36,
     borderRadius: 6,

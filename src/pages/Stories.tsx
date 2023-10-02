@@ -30,11 +30,13 @@ import { useFocusEffect } from '@react-navigation/native'
 import { useIsFocused } from '@react-navigation/native'
 import RNFS from 'react-native-fs'
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import { TextInput } from 'react-native-gesture-handler'
 Ionicons.loadFont
 
 LogBox.ignoreAllLogs(true)
 
 const Stories = (props: any) => {
+  var selecionados: any
   const [visible, setVisible] = useState(false)
   const [storyDescribe, setStoryDescribe] = useState('')
   const [placeName, setPlaceName] = useState('')
@@ -43,6 +45,7 @@ const Stories = (props: any) => {
   const [selectedImageAux, setSelectedImageAux] = useState(null)
   const [imageInBase64, setImageInBase64] = useState(null)
   const [stories, setStories] = useState<StorysProps[]>([])
+  const [auxStories, setAuxStories] = useState<StorysProps[]>([])
 
   const [idEdit, setIdEdit] = useState(null)
 
@@ -65,9 +68,9 @@ const Stories = (props: any) => {
   const opReason3 = { text: '👬 Friends', id: 'friends' }
   const opReason4 = { text: '👨🏼‍⚕️ Health', id: 'health' }
   const opReason5 = { text: '🪂 Hobbies', id: 'hobbies' }
-  const opReason6 = { text: '🚴 Sport', id: 'sport' }
-  const opReason7 = { text: '💼 Work', id: 'work' }
-  const opReason8 = {
+  const opReason7 = { text: '🚴 Sport', id: 'sport' }
+  const opReason8 = { text: '💼 Work', id: 'work' }
+  const opReason6 = {
     text: '❤️ Relation' + '\n' + 'ship',
     id: 'relationship'
   }
@@ -156,6 +159,7 @@ const Stories = (props: any) => {
         const realm = await getRealm()
         const data = realm.objects(dbName)
         setStories(data)
+        setAuxStories(data)
         // console.log('STORIES', stories)
 
         if (props.route.params.storyEdit[0].id.toString().length > 0) {
@@ -169,8 +173,8 @@ const Stories = (props: any) => {
           showModal()
 
           console.log(
-            'props.route.params.storyEdit[0].id.toString().length',
-            props.route.params.storyEdit[0].id.toString().length
+            'props.route.params.storyEdit[0] ',
+            props.route.params.storyEdit[0]
           )
         }
       }
@@ -178,6 +182,23 @@ const Stories = (props: any) => {
       loadStories()
     }, [props, isFocused])
   )
+
+  const removeAccent = (str: string) => {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  }
+
+  const searchStories = (str: string) => {
+    const arrStories = auxStories
+    str = removeAccent(str).toUpperCase()
+    setStories(
+      arrStories.filter((s) =>
+        (
+          removeAccent(s.describe).toUpperCase() ||
+          removeAccent(s.placeName).toUpperCase()
+        ).includes(str)
+      )
+    )
+  }
 
   const filterFeelEmojis = (id: string) => {
     if (id.length > 0) {
@@ -460,7 +481,6 @@ const Stories = (props: any) => {
                       setOptionsReason([])
                       setPlaceName('')
                       setSelectedImage(null)
-                      setSelectedImageAux(null)
                       setImageInBase64(null)
                       setIdEdit(null)
                     }}
@@ -693,34 +713,50 @@ const Stories = (props: any) => {
             </ScrollView>
           </KeyboardAvoidingView>
         </Modal>
-        {stories.length > 0 ? (
-          <FlatList
-            data={stories}
-            // @ts-ignore
-            renderItem={renderItem}
-            keyExtractor={(item: any) => item.id}
-            numColumns={1}
-            showsVerticalScrollIndicator={false}
-          />
-        ) : (
-          <View
+        <View>
+          <TextInput
             style={{
-              flex: 1,
-              justifyContent: 'center',
-              alignContent: 'center',
-              alignItems: 'center'
+              marginHorizontal: 20,
+              borderColor: '#000',
+              borderWidth: 1,
+              borderRadius: 25,
+              height: 40,
+              paddingLeft: 10,
+              marginTop: 5
             }}
-          >
-            <Text
+            placeholder="Pesquisar"
+            onChangeText={(str: string) => searchStories(str)}
+            autoCapitalize="none"
+          />
+          {stories.length > 0 ? (
+            <FlatList
+              data={stories}
+              // @ts-ignore
+              renderItem={renderItem}
+              keyExtractor={(item: any) => item.id}
+              numColumns={1}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <View
               style={{
-                color: '#000000',
-                fontSize: 20
+                flex: 1,
+                justifyContent: 'center',
+                alignContent: 'center',
+                alignItems: 'center'
               }}
             >
-              Your stories will appear here
-            </Text>
-          </View>
-        )}
+              <Text
+                style={{
+                  color: '#000000',
+                  fontSize: 20
+                }}
+              >
+                Your stories will appear here
+              </Text>
+            </View>
+          )}
+        </View>
       </SafeAreaView>
     </>
   )

@@ -72,7 +72,7 @@ const CheckBoxFeel = ({
             onPress={() => toggle(op?.id)}
           >
             {selected.findIndex((i) => i === op.id) !== -1 ? (
-              <Text style={styles.optextTouchable}>{op?.text}</Text>
+              <Text style={styles.optext}>{op?.text}</Text>
             ) : (
               <Text style={styles.optext}>{op?.text}</Text>
             )}
@@ -112,13 +112,6 @@ const styles = StyleSheet.create({
     alignContent: 'center',
     alignItems: 'center',
     justifyContent: 'center'
-  },
-  optextTouchable: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
-    paddingRight: 5,
-    textAlign: 'center'
   },
   optext: {
     color: '#555',

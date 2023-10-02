@@ -5,7 +5,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import getRealm from '../services/realm'
 
 import { StorysProps } from '../models/Stories.interface'
-import StatusWrapper from '../StatusWrapper'
+import StatusWrapper from '../components/StatusWrapper'
 
 import { useFocusEffect } from '@react-navigation/native'
 import { useIsFocused } from '@react-navigation/native'
