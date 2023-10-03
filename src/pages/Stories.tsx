@@ -162,7 +162,7 @@ const Stories = (props: any) => {
         setAuxStories(data)
         // console.log('STORIES', stories)
 
-        if (props.route.params.storyEdit[0].id.toString().length > 0) {
+        if (props.route.params.storyEdit[0]?.id.toString().length > 0) {
           setIdEdit(props.route.params.storyEdit[0].id)
           setStoryDescribe(props.route.params.storyEdit[0].describe)
           setOptionsFeel(props.route.params.storyEdit[0].feel)
@@ -170,13 +170,13 @@ const Stories = (props: any) => {
           setPlaceName(props.route.params.storyEdit[0].placeName)
           setSelectedImage(props.route.params.storyEdit[0].image)
           setSelectedImageAux(props.route.params.storyEdit[0].image)
+          setImageInBase64(props.route.params.storyEdit[0].image)
           showModal()
-
-          console.log(
-            'props.route.params.storyEdit[0] ',
-            props.route.params.storyEdit[0]
-          )
         }
+      }
+
+      if (props.route.params.open === true) {
+        showModal()
       }
 
       loadStories()
@@ -728,7 +728,7 @@ const Stories = (props: any) => {
             onChangeText={(str: string) => searchStories(str)}
             autoCapitalize="none"
           />
-          {stories.length > 0 ? (
+          {stories.length > 0 && (
             <FlatList
               data={stories}
               // @ts-ignore
@@ -737,10 +737,11 @@ const Stories = (props: any) => {
               numColumns={1}
               showsVerticalScrollIndicator={false}
             />
-          ) : (
+          )}
+          {stories.length == 0 && (
             <View
               style={{
-                flex: 1,
+                top: 250,
                 justifyContent: 'center',
                 alignContent: 'center',
                 alignItems: 'center'

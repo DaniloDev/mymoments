@@ -3,23 +3,46 @@ import { View, Text, StyleSheet, Image, Alert } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import getRealm from '../services/realm'
-
+import { format, formatDistance } from 'date-fns'
 import { StorysProps } from '../models/Stories.interface'
 import StatusWrapper from '../components/StatusWrapper'
 
 import { useFocusEffect } from '@react-navigation/native'
 import { useIsFocused } from '@react-navigation/native'
+
+import { anyNumber, frases } from '../frases'
+
 import Ionicons from 'react-native-vector-icons/Ionicons'
 Ionicons.loadFont
 
-const Home = ({ navigation }: any) => {
+const Home = ({ navigation, props }: any) => {
   const [daylyMotivation, setDaylyMotivation] = useState('')
   const [goodTimes, setGoodTimes] = useState<StorysProps[]>([])
   const [routherTimes, setRoutherTimes] = useState<StorysProps[]>([])
   const [visibleGoodStories, setVisibleGoodStories] = useState(false)
   const [visibleRougherStories, setVisibleRougherStories] = useState(false)
 
+  const [stories, setStories] = useState([])
+
+  const [dateFormated, setDateFormated] = useState('')
+
   const isFocused = useIsFocused()
+
+  useFocusEffect(
+    useCallback(() => {
+      const dbName = 'Story'
+      const loadStories = async () => {
+        const realm = await getRealm()
+        const data = realm.objects(dbName)
+        const setInStories = data[data.length - 1]
+        setStories(setInStories)
+        console.log('new Date()', new Date().toString().substring(0, 15))
+        console.log('stories.date', stories.date.toString().substring(0, 15))
+      }
+
+      loadStories()
+    }, [props, isFocused])
+  )
 
   const getGoodTimes = async () => {
     setVisibleGoodStories(true)
@@ -74,6 +97,41 @@ const Home = ({ navigation }: any) => {
       //   realm.close()
     }
   }
+
+  const filterFeelEmojis = (id: string) => {
+    if (id?.toString().length > 0) {
+      let feelEmojis = [
+        { text: '😄 Awesome', id: 'awesome' },
+        { text: '😊 Pretty good', id: 'pretty_good' },
+        { text: '😐 Quite OK', id: 'quite_ok' },
+        { text: '😔 Kind of bad', id: 'kind_of_bad' },
+        { text: '😥 Horrible', id: 'horrible' }
+      ]
+
+      let sendFeelEmojis = feelEmojis.filter((element) => element.id === id)
+
+      return sendFeelEmojis[0].text
+    }
+  }
+
+  const filterReasonEmojis = (id: string) => {
+    if (id?.toString().length > 0) {
+      let reasonEmojis = [
+        { text: '👪 Family', id: 'family' },
+        { text: '🍲 Food', id: 'food' },
+        { text: '👬 Friends', id: 'friends' },
+        { text: '👨🏼‍⚕️ Health', id: 'health' },
+        { text: '🪂 Hobbies', id: 'hobbies' },
+        { text: '🚴 Sport', id: 'sport' },
+        { text: '💼 Work', id: 'work' },
+        { text: '❤️ Relationship', id: 'relationship' }
+      ]
+
+      let sendReasonEmojis = reasonEmojis.filter((element) => element.id === id)
+
+      return sendReasonEmojis[0].text
+    }
+  }
   return (
     <>
       <View style={{ backgroundColor: '#ffffff' }}>
@@ -123,123 +181,197 @@ const Home = ({ navigation }: any) => {
 
         <View style={{ flexDirection: 'column' }}>
           <Text style={{ top: 30, paddingLeft: 32 }}>
-            TEXTO MOTIVACIONAL AQUI
+            {'"' +
+              frases[anyNumber].frase +
+              '"' +
+              ' ' +
+              '-' +
+              ' ' +
+              frases[anyNumber].autor}
           </Text>
         </View>
-        <View style={{ top: 40, paddingLeft: 20 }}>
-          <View style={{ flexDirection: 'row', top: 25 }}>
-            <Ionicons
-              name="journal-outline"
-              size={20}
-              color="#9a9a9a"
-              style={{ paddingLeft: 12 }}
-            />
-            <Text style={{ paddingLeft: 2, fontSize: 12 }}>
-              WEDNESDAY, MAY 13, 2020
-            </Text>
-          </View>
-          <View style={{ flexDirection: 'column' }}>
-            <Text style={{ top: 30, paddingLeft: 15 }}>
-              I reaaly enejoyed sppending time with my family.
-            </Text>
-            <View style={{ flexDirection: 'row' }}>
-              <Text style={styles.textAwesome}>😃 Awesome</Text>
-              <Text style={styles.textFamily}>👪 Family</Text>
-            </View>
 
-            <View style={{ top: 60, paddingLeft: 15 }}>
-              <TouchableOpacity>
-                <Ionicons name="add" size={24} color={'#000000'} />
-              </TouchableOpacity>
-
-              <Text
-                style={{ fontSize: 28, fontWeight: 'bold', color: '#000000' }}
-              >
-                Reflect on my life
+        <View style={{ top: 50, paddingLeft: 20 }}>
+          {stories &&
+          stories?.date?.toString().substring(0, 15) ==
+            new Date().toString().substring(0, 15) ? (
+            <View>
+              <View style={{ flexDirection: 'row' }}>
+                <Ionicons
+                  name="journal-outline"
+                  size={20}
+                  color="#9a9a9a"
+                  style={{ paddingLeft: 12 }}
+                />
+                <Text style={styles.dateWithImage}>
+                  {format(Date.now(stories.date), 'EEEE, MMM dd, yyyy')}
+                </Text>
+              </View>
+              <Text style={styles.textDecribeWithImage}>
+                {stories.describe}
               </Text>
+              <Text style={styles.placeWithImage}>{stories.placeName}</Text>
 
-              <View
+              <View style={styles.emojiViewContainer}>
+                <View style={styles.emojisView}>
+                  <Text style={styles.emojisText}>
+                    {filterFeelEmojis(stories.feel)}
+                  </Text>
+                </View>
+                <View style={styles.emojisView}>
+                  <Text style={styles.emojisText}>
+                    {filterReasonEmojis(stories.reason)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <View style={{ left: 4 }}>
+              <View style={{ flexDirection: 'row' }}>
+                <Ionicons
+                  name="journal-outline"
+                  size={20}
+                  color="#9a9a9a"
+                  style={{ paddingLeft: 12 }}
+                />
+                <Text> {format(Date.now(), 'EEEE, MMM dd, yyyy')}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('Stories', {
+                    open: true
+                  })
+                }
                 style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-around',
-                  right: 30,
-                  top: 20,
-                  paddingLeft: 22
+                  backgroundColor: '#bbbbbb52',
+                  height: '50%',
+                  width: '80%',
+                  left: 14,
+                  top: 5,
+                  alignContent: 'center',
+                  justifyContent: 'center',
+                  alignItems: 'center'
                 }}
               >
-                <TouchableOpacity onPress={getGoodTimes}>
-                  <View
-                    style={{
-                      width: 100,
-                      padding: 6,
-                      borderRadius: 6,
-                      backgroundColor: '#ffffff',
-                      elevation: 3,
-                      borderColor: '#000000',
-                      flexDirection: 'column'
-                    }}
-                  >
-                    <Ionicons
-                      style={{ paddingBottom: 50 }}
-                      name="happy-outline"
-                      size={32}
-                      color={'#000000'}
-                    />
-                    <Text>My good</Text>
-                    <Text>times</Text>
-                  </View>
-                </TouchableOpacity>
+                <Ionicons
+                  name="journal-outline"
+                  size={20}
+                  color="#9a9a9a"
+                  style={{ paddingLeft: 12 }}
+                />
 
-                <TouchableOpacity onPress={getRougherTimes}>
-                  <View
-                    style={{
-                      width: 100,
-                      padding: 6,
-                      borderRadius: 6,
-                      backgroundColor: '#ffffff',
-                      elevation: 3,
-                      borderColor: '#000000',
-                      flexDirection: 'column'
-                    }}
-                  >
-                    <Ionicons
-                      style={{ paddingBottom: 50 }}
-                      name="sad-outline"
-                      size={32}
-                      color={'#000000'}
-                    />
-                    <Text>My rougher</Text>
-                    <Text>times</Text>
-                  </View>
-                </TouchableOpacity>
+                <Text style={{ textAlign: 'center', color: '#9a9a9a' }}>
+                  Add my story of the day
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
-                <TouchableOpacity
-                  onPress={() => {
-                    console.log('MY HAPPY PLACES')
+          <View
+            style={{
+              bottom:
+                stories &&
+                stories?.date?.toString().substring(0, 15) ==
+                  new Date().toString().substring(0, 15)
+                  ? 10
+                  : 0,
+
+              top:
+                stories &&
+                stories?.date?.toString().substring(0, 15) ==
+                  new Date().toString().substring(0, 15)
+                  ? 20
+                  : -190,
+              paddingLeft: 15
+            }}
+          >
+            <Text
+              style={{ fontSize: 28, fontWeight: 'bold', color: '#000000' }}
+            >
+              Reflect on my life
+            </Text>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-around',
+                right: 30,
+                top: 20,
+                paddingLeft: 22
+              }}
+            >
+              <TouchableOpacity onPress={getGoodTimes}>
+                <View
+                  style={{
+                    width: 100,
+                    padding: 6,
+                    borderRadius: 6,
+                    backgroundColor: '#ffffff',
+                    elevation: 3,
+                    borderColor: '#000000',
+                    flexDirection: 'column'
                   }}
                 >
-                  <View
-                    style={{
-                      width: 100,
-                      padding: 6,
-                      borderRadius: 6,
-                      backgroundColor: '#ffffff',
-                      elevation: 3,
-                      borderColor: '#000000',
-                      flexDirection: 'column'
-                    }}
-                  >
-                    <Ionicons
-                      style={{ paddingBottom: 50 }}
-                      name="map-outline"
-                      size={32}
-                      color={'#000000'}
-                    />
-                    <Text>My happy</Text>
-                    <Text>places</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
+                  <Ionicons
+                    style={{ paddingBottom: 50 }}
+                    name="happy-outline"
+                    size={32}
+                    color={'#000000'}
+                  />
+                  <Text>My good</Text>
+                  <Text>times</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={getRougherTimes}>
+                <View
+                  style={{
+                    width: 100,
+                    padding: 6,
+                    borderRadius: 6,
+                    backgroundColor: '#ffffff',
+                    elevation: 3,
+                    borderColor: '#000000',
+                    flexDirection: 'column'
+                  }}
+                >
+                  <Ionicons
+                    style={{ paddingBottom: 50 }}
+                    name="sad-outline"
+                    size={32}
+                    color={'#000000'}
+                  />
+                  <Text>My rougher</Text>
+                  <Text>times</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  console.log('MY HAPPY PLACES')
+                }}
+              >
+                <View
+                  style={{
+                    width: 100,
+                    padding: 6,
+                    borderRadius: 6,
+                    backgroundColor: '#ffffff',
+                    elevation: 3,
+                    borderColor: '#000000',
+                    flexDirection: 'column'
+                  }}
+                >
+                  <Ionicons
+                    style={{ paddingBottom: 50 }}
+                    name="map-outline"
+                    size={32}
+                    color={'#000000'}
+                  />
+                  <Text>My happy</Text>
+                  <Text>places</Text>
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -281,7 +413,8 @@ const styles = StyleSheet.create({
     top: 3,
     fontSize: 12,
     fontWeight: 'normal',
-    color: '#9a9a9a'
+    color: '#9a9a9a',
+    left: 6
   },
   textAwesome: {
     fontSize: 16,
@@ -317,5 +450,47 @@ const styles = StyleSheet.create({
     right: 20,
     left: 20,
     top: 40
+  },
+
+  dateWithImage: {
+    color: '#bbbbbb',
+    left: 6,
+    bottom: 2,
+    paddingBottom: 4
+  },
+  textDecribeWithImage: {
+    color: '#000000',
+    left: 10,
+    paddingBottom: 8
+  },
+  placeWithImage: {
+    color: '#eb705f',
+    left: 10,
+    paddingBottom: 4
+  },
+  emojiViewContainer: {
+    display: 'flex',
+    flexDirection: 'row'
+  },
+  emojisView: {
+    top: 8,
+    left: 10,
+    width: 122,
+    marginBottom: 8,
+    height: 36,
+    borderRadius: 6,
+    borderWidth: 2,
+    elevation: 3,
+    backgroundColor: '#ffffff',
+    borderColor: '#000000',
+    color: '#555',
+    marginRight: 8
+  },
+  emojisText: {
+    color: '#555',
+    fontSize: 15,
+    fontWeight: '600',
+    padding: 5,
+    textAlign: 'center'
   }
 })
