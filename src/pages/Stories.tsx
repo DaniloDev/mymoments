@@ -29,6 +29,8 @@ import { getID } from '../utils/functions'
 import { useFocusEffect } from '@react-navigation/native'
 import { useIsFocused } from '@react-navigation/native'
 import RNFS from 'react-native-fs'
+
+import Calendar from 'react-native-calendars/src/calendar'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { TextInput } from 'react-native-gesture-handler'
 Ionicons.loadFont
@@ -46,6 +48,8 @@ const Stories = (props: any) => {
   const [imageInBase64, setImageInBase64] = useState(null)
   const [stories, setStories] = useState<StorysProps[]>([])
   const [auxStories, setAuxStories] = useState<StorysProps[]>([])
+
+  const [dateMarked, setDateMarked] = useState('')
 
   const [idEdit, setIdEdit] = useState(null)
 
@@ -572,6 +576,21 @@ const Stories = (props: any) => {
                     maxLength={50}
                     autoCapitalize={'none'}
                   />
+
+                  <Text
+                    style={{
+                      color: '#000000',
+                      fontSize: 22,
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    What is date?
+                  </Text>
+
+                  <Calendar
+                    onDayPress={(date) => setDateMarked(date.dateString)}
+                  />
+
                   <Text
                     style={{
                       fontSize: 22,

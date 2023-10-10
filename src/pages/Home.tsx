@@ -1,48 +1,116 @@
 import React, { useState, useCallback } from 'react'
-import { View, Text, StyleSheet, Image, Alert } from 'react-native'
-import { TouchableOpacity } from 'react-native-gesture-handler'
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  Dimensions,
+  FlatList,
+  Image,
+  TouchableWithoutFeedback,
+  ImageBackground,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  TextInput,
+  ScrollView,
+  TouchableOpacity
+} from 'react-native'
+import { Input } from 'react-native-elements'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import getRealm from '../services/realm'
-import { format, formatDistance } from 'date-fns'
+import { MomentsProps } from '../models/Moments.interface'
 import { StorysProps } from '../models/Stories.interface'
 import StatusWrapper from '../components/StatusWrapper'
-
+import dataMoment from '../dataMoment'
 import { useFocusEffect } from '@react-navigation/native'
 import { useIsFocused } from '@react-navigation/native'
 
-import { anyNumber, frases } from '../frases'
+import { MotiView } from 'moti'
+import Calendar from 'react-native-calendars/src/calendar'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import { SafeAreaView } from 'react-native-safe-area-context'
 Ionicons.loadFont
 
 const Home = ({ navigation, props }: any) => {
-  const [daylyMotivation, setDaylyMotivation] = useState('')
   const [goodTimes, setGoodTimes] = useState<StorysProps[]>([])
   const [routherTimes, setRoutherTimes] = useState<StorysProps[]>([])
   const [visibleGoodStories, setVisibleGoodStories] = useState(false)
   const [visibleRougherStories, setVisibleRougherStories] = useState(false)
 
-  const [stories, setStories] = useState([])
-
-  const [dateFormated, setDateFormated] = useState('')
+  const [moments, setMoments] = useState([])
+  const [visible, setVisible] = useState(false)
 
   const isFocused = useIsFocused()
+  const cardPurple = require('./../assets/images/cardpurple.png')
+
+  const [idEdit, setIdEdit] = useState(null)
+  const [dateMarked, setDateMarked] = useState('')
+
+  var selecionados: any
+
+  const [storyDescribe, setStoryDescribe] = useState('')
+  const [placeName, setPlaceName] = useState('')
+  const [disabledButtonSave, setDisabledButtonSave] = useState(true)
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [selectedImageAux, setSelectedImageAux] = useState(null)
+  const [imageInBase64, setImageInBase64] = useState(null)
+  const [stories, setStories] = useState<StorysProps[]>([])
+  const [auxStories, setAuxStories] = useState<StorysProps[]>([])
+
+  const showModal = () => setVisible(true)
+  const hideModal = () => setVisible(false)
 
   useFocusEffect(
     useCallback(() => {
-      const dbName = 'Story'
-      const loadStories = async () => {
+      const dbName = 'Moment'
+      const loadMoments = async () => {
         const realm = await getRealm()
         const data = realm.objects(dbName)
-        const setInStories = data[data.length - 1]
-        setStories(setInStories)
-        console.log('new Date()', new Date().toString().substring(0, 15))
-        console.log('stories.date', stories.date.toString().substring(0, 15))
+        setMoments(data)
+        console.log('MOMENTS ', moments)
       }
 
-      loadStories()
+      loadMoments()
     }, [props, isFocused])
   )
+
+  const renderItem = ({ item, index }) => {
+    return (
+      <TouchableOpacity onPress={() => Alert.alert('AQUI')}>
+        <MotiView
+          style={styles.listContainer}
+          from={{ opacity: 0, translateY: 50 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ delay: 1000 + index * 200 }}
+        >
+          <View style={styles.imageContainer}>
+            {item.image ? (
+              <Image
+                source={item.image}
+                style={styles.image}
+                resizeMode="stretch"
+              />
+            ) : (
+              <ImageBackground
+                source={cardPurple}
+                style={styles.imageBackground}
+                resizeMode="stretch"
+              >
+                <Text style={{ color: '#ffffff' }}>{item.name}</Text>
+              </ImageBackground>
+            )}
+          </View>
+          <View style={{ alignContent: 'flex-start', bottom: 40 }}>
+            <Text style={styles.nameText}>{item.name}</Text>
+            <Text style={styles.updatedAtText}>Updated {item.updatedAt}</Text>
+            <Text style={styles.priceText}>{item.describe}</Text>
+          </View>
+        </MotiView>
+      </TouchableOpacity>
+    )
+  }
 
   const getGoodTimes = async () => {
     setVisibleGoodStories(true)
@@ -135,263 +203,326 @@ const Home = ({ navigation, props }: any) => {
   return (
     <>
       <View style={{ backgroundColor: '#ffffff' }}>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('configs', {
-              users: [
-                {
-                  name: 'Danilo Santos Nascimento',
-                  email: 'danisn2010@gmail.com',
-                  cpf: '857.734.645-51'
-                }
-              ]
-            })
-          }
-        >
+        <TouchableOpacity onPress={showModal}>
           <Text style={{ textAlign: 'right', right: 20 }}>
-            <MaterialIcons name="settings" size={25} color={'#000000'} />
+            <Ionicons name="add-circle" size={25} color={'#000000'} />
           </Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.container}>
-        <View style={{ flexDirection: 'row' }}>
-          <Text style={styles.textmyDay}> My day</Text>
-        </View>
-
-        {/*  <Input 
-                style={{fontSize: 16, paddingRight: 40, color: '#000'}}
-                placeholder='Digite uma frase que te motive'
-                placeholderTextColor={'#a7a7a7'}
-                value={daylyMotivation}
-                multiline={true}
-                onChangeText={str => setDaylyMotivation(str)}
-                maxLength={200}
-                cursorColor={'#000'}
-    />*/}
-
-        <View style={{ flexDirection: 'row', top: 25 }}>
-          <Ionicons
-            name="sunny-outline"
-            size={20}
-            color="#9a9a9a"
-            style={{ paddingLeft: 28 }}
-          />
-          <Text style={styles.infophaseMototivation}> DAILY MOTIVATION</Text>
-        </View>
-
-        <View style={{ flexDirection: 'column' }}>
-          <Text style={{ top: 30, paddingLeft: 32 }}>
-            {'"' +
-              frases[anyNumber].frase +
-              '"' +
-              ' ' +
-              '-' +
-              ' ' +
-              frases[anyNumber].autor}
-          </Text>
-        </View>
-
-        <View style={{ top: 50, paddingLeft: 20 }}>
-          {stories &&
-          stories?.date?.toString().substring(0, 15) ==
-            new Date().toString().substring(0, 15) ? (
-            <View>
-              <View style={{ flexDirection: 'row' }}>
-                <Ionicons
-                  name="journal-outline"
-                  size={20}
-                  color="#9a9a9a"
-                  style={{ paddingLeft: 12 }}
-                />
-                <Text style={styles.dateWithImage}>
-                  {format(Date.now(stories.date), 'EEEE, MMM dd, yyyy')}
-                </Text>
-              </View>
-              <Text style={styles.textDecribeWithImage}>
-                {stories.describe}
-              </Text>
-              <Text style={styles.placeWithImage}>{stories.placeName}</Text>
-
-              <View style={styles.emojiViewContainer}>
-                <View style={styles.emojisView}>
-                  <Text style={styles.emojisText}>
-                    {filterFeelEmojis(stories.feel)}
-                  </Text>
-                </View>
-                <View style={styles.emojisView}>
-                  <Text style={styles.emojisText}>
-                    {filterReasonEmojis(stories.reason)}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          ) : (
-            <View style={{ left: 4 }}>
-              <View style={{ flexDirection: 'row' }}>
-                <Ionicons
-                  name="journal-outline"
-                  size={20}
-                  color="#9a9a9a"
-                  style={{ paddingLeft: 12 }}
-                />
-                <Text> {format(Date.now(), 'EEEE, MMM dd, yyyy')}</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('Stories', {
-                    open: true
-                  })
-                }
-                style={{
-                  backgroundColor: '#bbbbbb52',
-                  height: '50%',
-                  width: '80%',
-                  left: 14,
-                  top: 5,
-                  alignContent: 'center',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-              >
-                <Ionicons
-                  name="journal-outline"
-                  size={20}
-                  color="#9a9a9a"
-                  style={{ paddingLeft: 12 }}
-                />
-
-                <Text style={{ textAlign: 'center', color: '#9a9a9a' }}>
-                  Add my story of the day
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          <View
-            style={{
-              bottom:
-                stories &&
-                stories?.date?.toString().substring(0, 15) ==
-                  new Date().toString().substring(0, 15)
-                  ? 10
-                  : 0,
-
-              top:
-                stories &&
-                stories?.date?.toString().substring(0, 15) ==
-                  new Date().toString().substring(0, 15)
-                  ? 20
-                  : -190,
-              paddingLeft: 15
-            }}
+      <View style={{ backgroundColor: '#ffffff' }}>
+        <Text style={{ textAlign: 'center' }}>Moments</Text>
+      </View>
+      <SafeAreaView style={styles.container}>
+        {/*   INICIO MODAL        */}
+        <Modal visible={visible} animationType="slide">
+          <KeyboardAvoidingView
+            behavior={Platform.OS == 'ios' ? 'padding' : 'height'}
+            //keyboardVerticalOffset={80}
           >
-            <Text
-              style={{ fontSize: 28, fontWeight: 'bold', color: '#000000' }}
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
             >
-              Reflect on my life
-            </Text>
+              {/* @ts-ignore  */}
+              <SafeAreaView style={[styles.container, styles.grey]}>
+                <SafeAreaView
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    padding: 10
+                  }}
+                >
+                  <TouchableOpacity
+                    onPress={() => {
+                      hideModal()
+                      setStoryDescribe('')
+                      //  setOptionsFeel([])
+                      //setOptionsReason([])
+                      setPlaceName('')
+                      setSelectedImage(null)
+                      setImageInBase64(null)
+                      setIdEdit(null)
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        color: '#000000'
+                      }}
+                    >
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                  {idEdit !== null ? (
+                    <TouchableOpacity
+                      onPress={() => {}}
+                      // disabled={disabledButtonSave}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 18
+                          //color: disabledButtonSave ? '#7673737e' : '#000000'
+                        }}
+                      >
+                        Update
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() => {}}
+                      // disabled={disabledButtonSave}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 18
+                          //color: disabledButtonSave ? '#7673737e' : '#000000'
+                        }}
+                      >
+                        Save
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </SafeAreaView>
+                {/* @ts-ignore */}
+                <View
+                  style={{
+                    alignItems: 'left',
+                    backgroundColor: '#ffffff',
+                    flex: 1,
+                    padding: 5
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 28,
+                      fontWeight: 'bold',
+                      color: '#000000'
+                    }}
+                  >
+                    Your story
+                  </Text>
 
+                  <Input
+                    style={{
+                      fontSize: 16,
+                      color: '#000',
+                      borderWidth: 1,
+                      borderBottomWidth: 0.2,
+                      marginTop: 20,
+                      borderRadius: 6,
+                      right: 0,
+                      left: 0,
+                      elevation: 0,
+                      borderTopColor: '#a7a7a7',
+                      borderBottomColor: '#a7a7a7',
+                      borderRightColor: '#a7a7a7',
+                      borderLeftColor: '#a7a7a7',
+                      paddingLeft: 25,
+                      paddingBottom: 20,
+                      paddingRight: 25
+                    }}
+                    placeholder={
+                      'Describe your day in one setence. Take the time to think about waht has made your day.'
+                    }
+                    value={storyDescribe}
+                    onChangeText={(str) => setStoryDescribe(str)}
+                    multiline={true}
+                    cursorColor={'#000000'}
+                    maxLength={50}
+                    autoCapitalize={'none'}
+                  />
+
+                  <Text
+                    style={{
+                      color: '#000000',
+                      fontSize: 22,
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    What is date?
+                  </Text>
+
+                  <Calendar
+                    onDayPress={(date) => setDateMarked(date.dateString)}
+                  />
+
+                  <Text
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 'bold',
+                      color: '#000000'
+                    }}
+                  >
+                    How did you feel?
+                  </Text>
+
+                  <Text
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 'bold',
+                      color: '#000000',
+                      top: 20
+                    }}
+                  >
+                    What was the reason?
+                  </Text>
+
+                  <Text
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 'bold',
+                      color: '#000000',
+                      top: 30,
+                      paddingBottom: 20
+                    }}
+                  >
+                    Was thre a special place?
+                  </Text>
+                  <Input
+                    style={{
+                      fontSize: 16,
+                      color: '#000',
+                      borderWidth: 1,
+                      borderBottomWidth: 0.2,
+                      marginTop: 20,
+                      borderRadius: 6,
+                      right: 0,
+                      left: 0,
+
+                      elevation: 0,
+                      borderTopColor: '#a7a7a7',
+                      borderBottomColor: '#a7a7a7',
+                      borderRightColor: '#a7a7a7',
+                      borderLeftColor: '#a7a7a7',
+                      paddingLeft: 25,
+                      paddingBottom: 20
+                    }}
+                    placeholder={'type a place name'}
+                    value={placeName}
+                    onChangeText={(str) => setPlaceName(str)}
+                    multiline={true}
+                    cursorColor={'#000000'}
+                    maxLength={40}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 'bold',
+                      color: '#000000'
+                    }}
+                  >
+                    Did you capture some moments?
+                  </Text>
+
+                  {selectedImage ? (
+                    <View
+                      style={{
+                        height: 200,
+                        width: '80%',
+                        alignContent: 'center',
+                        alignItems: 'center',
+                        top: 10,
+                        bottom: 6,
+                        elevation: 5,
+                        flexDirection: 'row'
+                      }}
+                    >
+                      <TouchableOpacity onPress={() => setSelectedImage(null)}>
+                        <Text style={{ top: 10, paddingLeft: 16 }}>
+                          <Ionicons
+                            name="close-circle"
+                            size={24}
+                            color={'#000000'}
+                          />
+                        </Text>
+                      </TouchableOpacity>
+                      <Image
+                        source={{ uri: selectedImage }}
+                        style={{
+                          height: 200,
+                          width: '80%',
+                          left: 30,
+                          borderRadius: 6,
+                          bottom: 5
+                        }}
+                      />
+                    </View>
+                  ) : (
+                    <TouchableOpacity onPress={() => {}}>
+                      <View
+                        style={{
+                          //backgroundColor: '#dddddda7',
+                          elevation: 8,
+                          backgroundColor: '#ffffff',
+                          alignItems: 'center',
+                          alignContent: 'center',
+                          width: 80,
+                          height: 80,
+                          padding: 12,
+                          top: 8,
+                          left: 120,
+                          borderRadius: 6,
+                          borderColor: '#000000'
+                        }}
+                      >
+                        <Ionicons name="image" size={30} color={'#000000'} />
+                        <Text>Add</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </SafeAreaView>
+              {/*   FIM MODAL   */}
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </Modal>
+
+        <View>
+          <TextInput
+            style={{
+              marginHorizontal: 20,
+              borderColor: '#000',
+              borderWidth: 1,
+              borderRadius: 25,
+              height: 40,
+              paddingLeft: 10,
+              marginTop: 5
+            }}
+            placeholder="Pesquisar"
+            onChangeText={(str: string) => {}}
+            autoCapitalize="none"
+          />
+          {moments && (
+            <FlatList
+              data={dataMoment}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id}
+              numColumns={1}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+          {!moments && (
             <View
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-around',
-                right: 30,
-                top: 20,
-                paddingLeft: 22
+                top: 250,
+                justifyContent: 'center',
+                alignContent: 'center',
+                alignItems: 'center'
               }}
             >
-              <TouchableOpacity onPress={getGoodTimes}>
-                <View
-                  style={{
-                    width: 100,
-                    padding: 6,
-                    borderRadius: 6,
-                    backgroundColor: '#ffffff',
-                    elevation: 3,
-                    borderColor: '#000000',
-                    flexDirection: 'column'
-                  }}
-                >
-                  <Ionicons
-                    style={{ paddingBottom: 50 }}
-                    name="happy-outline"
-                    size={32}
-                    color={'#000000'}
-                  />
-                  <Text>My good</Text>
-                  <Text>times</Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={getRougherTimes}>
-                <View
-                  style={{
-                    width: 100,
-                    padding: 6,
-                    borderRadius: 6,
-                    backgroundColor: '#ffffff',
-                    elevation: 3,
-                    borderColor: '#000000',
-                    flexDirection: 'column'
-                  }}
-                >
-                  <Ionicons
-                    style={{ paddingBottom: 50 }}
-                    name="sad-outline"
-                    size={32}
-                    color={'#000000'}
-                  />
-                  <Text>My rougher</Text>
-                  <Text>times</Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => {
-                  console.log('MY HAPPY PLACES')
+              <Text
+                style={{
+                  color: '#000000',
+                  fontSize: 20
                 }}
               >
-                <View
-                  style={{
-                    width: 100,
-                    padding: 6,
-                    borderRadius: 6,
-                    backgroundColor: '#ffffff',
-                    elevation: 3,
-                    borderColor: '#000000',
-                    flexDirection: 'column'
-                  }}
-                >
-                  <Ionicons
-                    style={{ paddingBottom: 50 }}
-                    name="map-outline"
-                    size={32}
-                    color={'#000000'}
-                  />
-                  <Text>My happy</Text>
-                  <Text>places</Text>
-                </View>
-              </TouchableOpacity>
+                Your moments will appear here
+              </Text>
             </View>
-          </View>
+          )}
         </View>
-      </View>
-
-      {visibleGoodStories && goodTimes.length > 0 && (
-        <StatusWrapper
-          statusData={goodTimes}
-          visible={visibleGoodStories}
-          onClose={(data: Boolean) => setVisibleGoodStories(false)}
-        />
-      )}
-
-      {visibleRougherStories && routherTimes.length > 0 && (
-        <StatusWrapper
-          statusData={routherTimes}
-          visible={visibleRougherStories}
-          onClose={(data: Boolean) => setVisibleRougherStories(false)}
-        />
-      )}
+      </SafeAreaView>
     </>
   )
 }
@@ -401,96 +532,74 @@ export default Home
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffff',
+    marginBottom: 150,
+    paddingTop: 10
   },
-  textmyDay: {
-    fontSize: 26,
+  viewBlocoMoment: {
+    backgroundColor: 'red',
+    alignItems: 'center'
+  },
+
+  listContainer: {
+    left: 25,
+    width: Dimensions.get('window').width - 70,
+    backgroundColor: 'white',
+    margin: 10,
+    borderRadius: 20,
+    height: 280,
+    elevation: 3
+  },
+  imageContainer: {
+    margin: 15,
+    borderRadius: 10,
+    overflow: 'hidden'
+  },
+  image: { width: '100%', height: '80%', top: 10, borderRadius: 6 },
+
+  imageBackground: {
+    width: '100%',
+    height: '80%',
+    alignContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    top: 10,
+    borderRadius: 6
+  },
+  nameText: {
+    color: 'black',
     fontWeight: 'bold',
-    color: '#000000',
-    paddingLeft: 25
+    marginLeft: 15
   },
-  infophaseMototivation: {
-    top: 3,
-    fontSize: 12,
-    fontWeight: 'normal',
-    color: '#9a9a9a',
-    left: 6
+  updatedAtText: {
+    top: 5,
+    fontWeight: 'bold',
+    marginLeft: 15
   },
-  textAwesome: {
-    fontSize: 16,
-    color: '#000000',
-    fontFamily: 'Times New Roman',
-    paddingLeft: 15,
-    paddingRight: 30,
-    textShadowOffset: { width: 5, height: 5 },
-    textShadowRadius: 10,
-    borderWidth: 0.1,
-    width: 140,
-    height: 26,
-    backgroundColor: '#c4c1ac85',
-    right: 20,
-    left: 20,
-    top: 40,
-    marginRight: 10
+  priceText: {
+    color: 'orange',
+    fontWeight: 'bold',
+    marginLeft: 15,
+    marginTop: 20,
+    bottom: 8
   },
-
-  textFamily: {
-    fontSize: 16,
-    color: '#000000',
-    fontFamily: 'Times New Roman',
-    paddingLeft: 15,
-    paddingRight: 30,
-
-    textShadowOffset: { width: 5, height: 5 },
-    textShadowRadius: 10,
-    borderWidth: 0.1,
-    width: 140,
-    height: 26,
-    backgroundColor: '#c4c1ac85',
-    right: 20,
-    left: 20,
-    top: 40
+  button: {
+    backgroundColor: '#62513E',
+    padding: 10,
+    margin: 15,
+    borderRadius: 10
   },
-
-  dateWithImage: {
-    color: '#bbbbbb',
-    left: 6,
-    bottom: 2,
-    paddingBottom: 4
-  },
-  textDecribeWithImage: {
-    color: '#000000',
-    left: 10,
-    paddingBottom: 8
-  },
-  placeWithImage: {
-    color: '#eb705f',
-    left: 10,
-    paddingBottom: 4
-  },
-  emojiViewContainer: {
-    display: 'flex',
-    flexDirection: 'row'
-  },
-  emojisView: {
-    top: 8,
-    left: 10,
-    width: 122,
-    marginBottom: 8,
-    height: 36,
-    borderRadius: 6,
-    borderWidth: 2,
-    elevation: 3,
-    backgroundColor: '#ffffff',
-    borderColor: '#000000',
-    color: '#555',
-    marginRight: 8
-  },
-  emojisText: {
-    color: '#555',
-    fontSize: 15,
-    fontWeight: '600',
-    padding: 5,
+  buttonText: {
+    color: 'white',
     textAlign: 'center'
+  },
+  scrollView: {
+    width: '100%'
+  },
+  contentContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    paddingBottom: 50
   }
 })
