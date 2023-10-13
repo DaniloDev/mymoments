@@ -4,11 +4,18 @@ const MomentSchema: ObjectSchema = {
   name: 'Moment',
   primaryKey: 'id',
   properties: {
-    id: { type: 'int', indexed: true },
+    id: { type: 'string', indexed: true },
     name: 'string',
-    describe: 'string',
-    date: 'date',
-    story: 'Story[]'
+    describe: {
+      type: 'string',
+      optional: true
+    },
+    image: {
+      type: 'string',
+      optional: true
+    },
+    date: 'date'
+    // story: 'Story[]'
   }
 }
 

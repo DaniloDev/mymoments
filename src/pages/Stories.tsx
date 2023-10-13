@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import {
   StyleSheet,
   Text,
@@ -15,7 +15,8 @@ import {
   PermissionsAndroid,
   Image,
   Keyboard,
-  LogBox
+  LogBox,
+  useWindowDimensions
 } from 'react-native'
 import { formatDistance } from 'date-fns'
 import { MotiView } from 'moti'
@@ -31,13 +32,20 @@ import { useIsFocused } from '@react-navigation/native'
 import RNFS from 'react-native-fs'
 
 import Calendar from 'react-native-calendars/src/calendar'
-import Ionicons from 'react-native-vector-icons/Ionicons'
+
 import { TextInput } from 'react-native-gesture-handler'
+import StatusWrapper from '../components/StatusWrapper'
+import BottomSheet from '../components/BottomSheet'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+
+import Ionicons from 'react-native-vector-icons/Ionicons'
 Ionicons.loadFont
 
 LogBox.ignoreAllLogs(true)
 
 const Stories = (props: any) => {
+  const SELECT_IMAGE = 'SELECT_IMAGE'
+  const TAKE_PICTURE = 'TAKE_PICTURE'
   var selecionados: any
   const [visible, setVisible] = useState(false)
   const [storyDescribe, setStoryDescribe] = useState('')
@@ -48,6 +56,13 @@ const Stories = (props: any) => {
   const [imageInBase64, setImageInBase64] = useState(null)
   const [stories, setStories] = useState<StorysProps[]>([])
   const [auxStories, setAuxStories] = useState<StorysProps[]>([])
+
+  const [visibleStories, setVisibleStories] = useState(false)
+  const [moment_Id, setMoment_Id] = useState('')
+
+  const [changeStory, setChangeStory] = useState('')
+
+  const [openModal, setOpenModal] = useState(false)
 
   const [dateMarked, setDateMarked] = useState('')
 
@@ -91,17 +106,32 @@ const Stories = (props: any) => {
     opReason8
   ]
 
-  const getAndSetImage = () => {
-    checkPermission()
+  const { height } = useWindowDimensions()
+  const bottomSheetRef = useRef()
+
+  const pressHandler = useCallback(() => {
+    bottomSheetRef.current.expand()
+  }, [])
+
+  const pressHandlerClose = useCallback(() => {
+    bottomSheetRef.current.close()
+  }, [])
+
+  const getAndSetImage = (param: string) => {
+    checkPermission(param)
   }
-  const checkPermission = async () => {
+  const checkPermission = async (param) => {
     // Function to check the platform
     // If Platform is Android then check for permissions.
 
     if (Platform.OS === 'ios') {
       //downloadFile()
       //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
-      selectImage()
+      if (param == SELECT_IMAGE) {
+        selectImage()
+      } else if (param == TAKE_PICTURE) {
+        takeaPicture()
+      }
     } else {
       try {
         const granted = await PermissionsAndroid.request(
@@ -115,7 +145,11 @@ const Stories = (props: any) => {
           // Start downloading
           // downloadFile()
           //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
-          selectImage()
+          if (param == SELECT_IMAGE) {
+            selectImage()
+          } else if (param == TAKE_PICTURE) {
+            takeaPicture()
+          }
           //console.log('Storage Permission Granted.')
           /*Alert.alert(
             translate('GenarateQrcode.permissions.alerts.success.title'),
@@ -136,7 +170,11 @@ const Stories = (props: any) => {
               // Start downloading
               // downloadFile()
               //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
-              selectImage()
+              if (param == SELECT_IMAGE) {
+                selectImage()
+              } else if (param == TAKE_PICTURE) {
+                takeaPicture()
+              }
               //console.log('Storage Permission Granted.')
               /*Alert.alert(
                   translate('GenarateQrcode.permissions.alerts.success.title'),
@@ -158,34 +196,56 @@ const Stories = (props: any) => {
 
   useFocusEffect(
     useCallback(() => {
-      const dbName = 'Story'
-      const loadStories = async () => {
-        const realm = await getRealm()
-        const data = realm.objects(dbName)
-        setStories(data)
-        setAuxStories(data)
-        // console.log('STORIES', stories)
+      //  if (props.route.params.open === true) {
+      //    setOpenModal(open)
+      //   }
 
-        if (props.route.params.storyEdit[0]?.id.toString().length > 0) {
-          setIdEdit(props.route.params.storyEdit[0].id)
-          setStoryDescribe(props.route.params.storyEdit[0].describe)
-          setOptionsFeel(props.route.params.storyEdit[0].feel)
-          setOptionsReason(props.route.params.storyEdit[0].reason)
-          setPlaceName(props.route.params.storyEdit[0].placeName)
-          setSelectedImage(props.route.params.storyEdit[0].image)
-          setSelectedImageAux(props.route.params.storyEdit[0].image)
-          setImageInBase64(props.route.params.storyEdit[0].image)
-          showModal()
-        }
+      if (props.route.params?.moment_id) {
+        setMoment_Id(props.route.params.moment_id)
       }
-
-      if (props.route.params.open === true) {
-        showModal()
-      }
-
       loadStories()
-    }, [props, isFocused])
+    }, [props, isFocused, moment_Id])
   )
+
+  const loadStories = async () => {
+    if (openModal == true) {
+      showModal()
+    }
+    try {
+      const dbName = 'Story'
+      const realm = await getRealm()
+      const response = realm
+        .objects<StorysProps[]>(dbName)
+        .filtered(`moment_id = '${moment_Id}'`)
+        .sorted('date')
+        .toJSON()
+      setStories(response)
+      setAuxStories(response)
+      console.log('Stories ', stories)
+
+      if (response.length === 0) {
+        console.log('Warning', 'There are no stories yet')
+      }
+    } catch (error) {
+      console.log(error)
+      // Alert.alert('Good Times', 'ERROR in Good Times')
+    } finally {
+      //realm.close()
+    }
+    // console.log('STORIES', stories)
+
+    if (props.route.params.storyEdit[0]?.id.toString().length > 0) {
+      setIdEdit(props.route.params.storyEdit[0].id)
+      setStoryDescribe(props.route.params.storyEdit[0].describe)
+      setOptionsFeel(props.route.params.storyEdit[0].feel)
+      setOptionsReason(props.route.params.storyEdit[0].reason)
+      setPlaceName(props.route.params.storyEdit[0].placeName)
+      setSelectedImage(props.route.params.storyEdit[0].image)
+      setSelectedImageAux(props.route.params.storyEdit[0].image)
+      setImageInBase64(props.route.params.storyEdit[0].image)
+      setOpenModal(true)
+    }
+  }
 
   const removeAccent = (str: string) => {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -206,46 +266,49 @@ const Stories = (props: any) => {
 
   const filterFeelEmojis = (id: string) => {
     if (id.length > 0) {
-      let feelEmojis = [
-        { text: '😄', id: 'awesome' },
-        { text: '😊', id: 'pretty_good' },
-        { text: '😐', id: 'quite_ok' },
-        { text: '😔', id: 'kind_of_bad' },
-        { text: '😥', id: 'horrible' }
-      ]
-
-      let sendFeelEmojis = feelEmojis.filter((element) => element.id === id)
-
-      return sendFeelEmojis[0].text
+      if (id == 'awesome') {
+        return '😄'
+      } else if (id == 'pretty_good') {
+        return '😊'
+      } else if (id == 'quite_ok') {
+        return '😐'
+      } else if (id == 'kind_of_bad') {
+        return '😔'
+      } else if (id == 'horrible') {
+        return '😥'
+      }
     }
   }
 
   const filterReasonEmojis = (id: string) => {
     if (id.length > 0) {
-      let reasonEmojis = [
-        { text: '👪', id: 'family' },
-        { text: '🍲', id: 'food' },
-        { text: '👬', id: 'friends' },
-        { text: '👨🏼‍⚕️', id: 'health' },
-        { text: '🪂', id: 'hobbies' },
-        { text: '🚴', id: 'sport' },
-        { text: '💼', id: 'work' },
-        { text: '❤️', id: 'relationship' }
-      ]
-
-      let sendReasonEmojis = reasonEmojis.filter((element) => element.id === id)
-
-      return sendReasonEmojis[0].text
+      if (id == 'family') {
+        return '👪'
+      } else if (id == 'food') {
+        return '🍲'
+      } else if (id == 'friends') {
+        return '👬'
+      } else if (id == 'health') {
+        return '👨🏼‍⚕️'
+      } else if (id == 'hobbies') {
+        return '🪂'
+      } else if (id == 'sport') {
+        return '🚴'
+      } else if (id == 'work') {
+        return '💼'
+      } else if (id == 'relationship') {
+        return '❤️'
+      }
     }
   }
-
   const saveStory = async (data: StorysProps) => {
     const realm = await getRealm()
     const dbName = 'Story'
-    const id = await getID(dbName)
+    const id = await getID(22)
 
     const dadosStory = {
       id: id,
+      moment_id: data.moment_id,
       describe: data.describe,
       feel: data.feel,
       reason: data.reason,
@@ -260,7 +323,41 @@ const Stories = (props: any) => {
   }
 
   const selectImage = async () => {
+    pressHandlerClose()
     launchImageLibrary(
+      {
+        title: 'Selecione uma imagem',
+        storageOptions: {
+          //skipBackup: true,
+          path: 'images'
+        }
+      },
+      (response) => {
+        // console.log('RES{ONSE', response)
+        if (response.didCancel) {
+          console.log('Seleção de imagem cancelada')
+          setSelectedImage(selectedImageAux)
+        } else if (response.error) {
+          console.error('Erro ao selecionar imagem:', response.error)
+        } else {
+          console.log('RESPONSE IN selectImage ', response)
+          setSelectedImage(response.assets[0].uri)
+          setSelectedImageAux(response.assets[0].uri)
+          const imagePath = response.assets[0].originalPath
+          RNFS.readFile(imagePath, 'base64').then((base64String) => {
+            setImageInBase64(
+              `data:${response.assets[0].type};base64,${base64String}`
+            )
+            // console.log('IMAGEINBASE64 ', imageInBase64)
+          })
+        }
+      }
+    )
+  }
+
+  const takeaPicture = async () => {
+    pressHandlerClose()
+    launchCamera(
       {
         title: 'Selecione uma imagem',
         storageOptions: {
@@ -315,6 +412,7 @@ const Stories = (props: any) => {
         const emojiCategory = checkCategoryToTheMoment(optionsFeel[0])
 
         const data = {
+          moment_id: moment_Id,
           describe: storyDescribe,
           feel: optionsFeel[0],
           reason: optionsReason[0],
@@ -334,6 +432,7 @@ const Stories = (props: any) => {
         setImageInBase64(null)
         hideModal()
         Keyboard.dismiss()
+        loadStories()
         Alert.alert('Success', 'Nice')
       } catch (err) {
         Alert.alert(err)
@@ -377,7 +476,12 @@ const Stories = (props: any) => {
     setPlaceName('')
     setSelectedImage(null)
     setImageInBase64(null)
+    setIdEdit(null)
+    loadStories()
+
+    //setChangeStory('modified')
     hideModal()
+    setOpenModal(false)
     Keyboard.dismiss()
   }
 
@@ -446,338 +550,484 @@ const Stories = (props: any) => {
   }
   return (
     <>
-      <View style={{ backgroundColor: '#ffffff' }}>
-        <TouchableOpacity onPress={showModal}>
-          <Text style={{ textAlign: 'right', right: 20 }}>
-            <Ionicons name="add-circle" size={25} color={'#000000'} />
-          </Text>
-        </TouchableOpacity>
-      </View>
-      <View style={{ backgroundColor: '#ffffff' }}>
-        <Text style={{ textAlign: 'center' }}>My Stories</Text>
-      </View>
-      <SafeAreaView style={styles.container}>
-        {/*   INICIO MODAL        */}
-        <Modal visible={visible} animationType="slide">
-          <KeyboardAvoidingView
-            behavior={Platform.OS == 'ios' ? 'padding' : 'height'}
-            //keyboardVerticalOffset={80}
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            flexDirection: 'row'
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => props.navigation.goBack(null)}
+            style={{ width: 25, height: 25, left: 22 }}
           >
-            <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={styles.contentContainer}
-              showsVerticalScrollIndicator={false}
+            <Text style={{ textAlign: 'center' }}>
+              <Ionicons name="arrow-back-outline" size={25} color={'#000000'} />
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setVisibleStories(true)}
+            style={{ width: 25, height: 25, left: 280 }}
+          >
+            <Text style={{ textAlign: 'center' }}>
+              <Ionicons name="images" size={25} color={'#000000'} />
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={showModal}
+            style={{ width: 25, height: 25, left: 290 }}
+          >
+            <Text style={{ textAlign: 'center' }}>
+              <Ionicons name="add-circle" size={25} color={'#000000'} />
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ backgroundColor: '#ffffff' }}>
+          <Text style={{ textAlign: 'center' }}>My Stories</Text>
+        </View>
+        <SafeAreaView style={styles.container}>
+          <BottomSheet
+            ref={bottomSheetRef}
+            activeHeight={height * 0.5}
+            backgroundColor={'white'}
+            backDropColor={'black'}
+          />
+          {/*   INICIO MODAL        */}
+          <Modal visible={visible} animationType="slide">
+            <KeyboardAvoidingView
+              behavior={Platform.OS == 'ios' ? 'padding' : 'height'}
+              //keyboardVerticalOffset={80}
             >
-              {/* @ts-ignore  */}
-              <SafeAreaView style={[styles.container, styles.grey]}>
-                <SafeAreaView
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    padding: 10
-                  }}
-                >
-                  <TouchableOpacity
-                    onPress={() => {
-                      hideModal()
-                      setStoryDescribe('')
-                      setOptionsFeel([])
-                      setOptionsReason([])
-                      setPlaceName('')
-                      setSelectedImage(null)
-                      setImageInBase64(null)
-                      setIdEdit(null)
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.contentContainer}
+                showsVerticalScrollIndicator={false}
+              >
+                {/* @ts-ignore  */}
+                <SafeAreaView style={[styles.container, styles.grey]}>
+                  <SafeAreaView
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      padding: 10
+                    }}
+                  >
+                    <TouchableOpacity
+                      onPress={() => {
+                        hideModal()
+                        setStoryDescribe('')
+                        setOptionsFeel([])
+                        setOptionsReason([])
+                        setPlaceName('')
+                        setSelectedImage(null)
+                        setImageInBase64(null)
+                        setIdEdit(null)
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          color: '#000000'
+                        }}
+                      >
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                    {idEdit !== null ? (
+                      <TouchableOpacity
+                        onPress={() => updateStory()}
+                        // disabled={disabledButtonSave}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 18
+                            //color: disabledButtonSave ? '#7673737e' : '#000000'
+                          }}
+                        >
+                          Update
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() => handleCanSave()}
+                        // disabled={disabledButtonSave}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 18
+                            //color: disabledButtonSave ? '#7673737e' : '#000000'
+                          }}
+                        >
+                          Save
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </SafeAreaView>
+
+                  {/* @ts-ignore */}
+                  <View
+                    style={{
+                      alignItems: 'left',
+                      backgroundColor: '#ffffff',
+                      flex: 1,
+                      padding: 5
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: 18,
+                        fontSize: 28,
+                        fontWeight: 'bold',
                         color: '#000000'
                       }}
                     >
-                      Cancel
+                      Your story
                     </Text>
-                  </TouchableOpacity>
-                  {idEdit !== null ? (
-                    <TouchableOpacity
-                      onPress={() => updateStory()}
-                      // disabled={disabledButtonSave}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 18
-                          //color: disabledButtonSave ? '#7673737e' : '#000000'
-                        }}
-                      >
-                        Update
-                      </Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity
-                      onPress={() => handleCanSave()}
-                      // disabled={disabledButtonSave}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 18
-                          //color: disabledButtonSave ? '#7673737e' : '#000000'
-                        }}
-                      >
-                        Save
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </SafeAreaView>
-                {/* @ts-ignore */}
-                <View
-                  style={{
-                    alignItems: 'left',
-                    backgroundColor: '#ffffff',
-                    flex: 1,
-                    padding: 5
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 28,
-                      fontWeight: 'bold',
-                      color: '#000000'
-                    }}
-                  >
-                    Your story
-                  </Text>
 
-                  <Input
-                    style={{
-                      fontSize: 16,
-                      color: '#000',
-                      borderWidth: 1,
-                      borderBottomWidth: 0.2,
-                      marginTop: 20,
-                      borderRadius: 6,
-                      right: 0,
-                      left: 0,
-                      elevation: 0,
-                      borderTopColor: '#a7a7a7',
-                      borderBottomColor: '#a7a7a7',
-                      borderRightColor: '#a7a7a7',
-                      borderLeftColor: '#a7a7a7',
-                      paddingLeft: 25,
-                      paddingBottom: 20,
-                      paddingRight: 25
-                    }}
-                    placeholder={
-                      'Describe your day in one setence. Take the time to think about waht has made your day.'
-                    }
-                    value={storyDescribe}
-                    onChangeText={(str) => setStoryDescribe(str)}
-                    multiline={true}
-                    cursorColor={'#000000'}
-                    maxLength={50}
-                    autoCapitalize={'none'}
-                  />
-
-                  <Text
-                    style={{
-                      color: '#000000',
-                      fontSize: 22,
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    What is date?
-                  </Text>
-
-                  <Calendar
-                    onDayPress={(date) => setDateMarked(date.dateString)}
-                  />
-
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 'bold',
-                      color: '#000000'
-                    }}
-                  >
-                    How did you feel?
-                  </Text>
-                  <CheckBoxFeel
-                    options={optionsFeelMultiple}
-                    onChange={(op) => setOptionsFeel(op)}
-                    multiple={false}
-                    option={idEdit !== null ? [optionsFeel] : null}
-                  />
-
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 'bold',
-                      color: '#000000',
-                      top: 20
-                    }}
-                  >
-                    What was the reason?
-                  </Text>
-                  <CheckBoxReason
-                    options={optionsReasonMultiple}
-                    onChange={(op) => setOptionsReason(op)}
-                    multiple={false}
-                    option={idEdit !== null ? [optionsReason] : null}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 'bold',
-                      color: '#000000',
-                      top: 30,
-                      paddingBottom: 20
-                    }}
-                  >
-                    Was thre a special place?
-                  </Text>
-                  <Input
-                    style={{
-                      fontSize: 16,
-                      color: '#000',
-                      borderWidth: 1,
-                      borderBottomWidth: 0.2,
-                      marginTop: 20,
-                      borderRadius: 6,
-                      right: 0,
-                      left: 0,
-
-                      elevation: 0,
-                      borderTopColor: '#a7a7a7',
-                      borderBottomColor: '#a7a7a7',
-                      borderRightColor: '#a7a7a7',
-                      borderLeftColor: '#a7a7a7',
-                      paddingLeft: 25,
-                      paddingBottom: 20
-                    }}
-                    placeholder={'type a place name'}
-                    value={placeName}
-                    onChangeText={(str) => setPlaceName(str)}
-                    multiline={true}
-                    cursorColor={'#000000'}
-                    maxLength={40}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 'bold',
-                      color: '#000000'
-                    }}
-                  >
-                    Did you capture some moments?
-                  </Text>
-
-                  {selectedImage ? (
-                    <View
+                    <Input
                       style={{
-                        height: 200,
-                        width: '80%',
-                        alignContent: 'center',
-                        alignItems: 'center',
-                        top: 10,
-                        bottom: 6,
-                        elevation: 5,
-                        flexDirection: 'row'
+                        fontSize: 16,
+                        color: '#000',
+                        borderWidth: 1,
+                        borderBottomWidth: 0.2,
+                        marginTop: 20,
+                        borderRadius: 6,
+                        right: 0,
+                        left: 0,
+                        elevation: 0,
+                        borderTopColor: '#a7a7a7',
+                        borderBottomColor: '#a7a7a7',
+                        borderRightColor: '#a7a7a7',
+                        borderLeftColor: '#a7a7a7',
+                        paddingLeft: 25,
+                        paddingBottom: 20,
+                        paddingRight: 25
+                      }}
+                      placeholder={
+                        'Describe your day in one setence. Take the time to think about waht has made your day.'
+                      }
+                      value={storyDescribe}
+                      onChangeText={(str) => setStoryDescribe(str)}
+                      multiline={true}
+                      cursorColor={'#000000'}
+                      maxLength={50}
+                      autoCapitalize={'none'}
+                    />
+
+                    <Text
+                      style={{
+                        color: '#000000',
+                        fontSize: 22,
+                        fontWeight: 'bold'
                       }}
                     >
-                      <TouchableOpacity onPress={() => setSelectedImage(null)}>
-                        <Text style={{ top: 10, paddingLeft: 16 }}>
-                          <Ionicons
-                            name="close-circle"
-                            size={24}
-                            color={'#000000'}
-                          />
-                        </Text>
-                      </TouchableOpacity>
-                      <Image
-                        source={{ uri: selectedImage }}
+                      What is date?
+                    </Text>
+
+                    <Calendar
+                      onDayPress={(date) => setDateMarked(date.dateString)}
+                    />
+
+                    <Text
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 'bold',
+                        color: '#000000'
+                      }}
+                    >
+                      How did you feel?
+                    </Text>
+                    <CheckBoxFeel
+                      options={optionsFeelMultiple}
+                      onChange={(op) => setOptionsFeel(op)}
+                      multiple={false}
+                      option={idEdit !== null ? [optionsFeel] : null}
+                    />
+
+                    <Text
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 'bold',
+                        color: '#000000',
+                        top: 20
+                      }}
+                    >
+                      What was the reason?
+                    </Text>
+                    <CheckBoxReason
+                      options={optionsReasonMultiple}
+                      onChange={(op) => setOptionsReason(op)}
+                      multiple={false}
+                      option={idEdit !== null ? [optionsReason] : null}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 'bold',
+                        color: '#000000',
+                        top: 30,
+                        paddingBottom: 20
+                      }}
+                    >
+                      Was thre a special place?
+                    </Text>
+                    <Input
+                      style={{
+                        fontSize: 16,
+                        color: '#000',
+                        borderWidth: 1,
+                        borderBottomWidth: 0.2,
+                        marginTop: 20,
+                        borderRadius: 6,
+                        right: 0,
+                        left: 0,
+
+                        elevation: 0,
+                        borderTopColor: '#a7a7a7',
+                        borderBottomColor: '#a7a7a7',
+                        borderRightColor: '#a7a7a7',
+                        borderLeftColor: '#a7a7a7',
+                        paddingLeft: 25,
+                        paddingBottom: 20
+                      }}
+                      placeholder={'type a place name'}
+                      value={placeName}
+                      onChangeText={(str) => setPlaceName(str)}
+                      multiline={true}
+                      cursorColor={'#000000'}
+                      maxLength={40}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 'bold',
+                        color: '#000000'
+                      }}
+                    >
+                      Did you capture some moments?
+                    </Text>
+
+                    {selectedImage ? (
+                      <View
                         style={{
                           height: 200,
                           width: '80%',
-                          left: 30,
-                          borderRadius: 6,
-                          bottom: 5
-                        }}
-                      />
-                    </View>
-                  ) : (
-                    <TouchableOpacity onPress={() => getAndSetImage()}>
-                      <View
-                        style={{
-                          //backgroundColor: '#dddddda7',
-                          elevation: 8,
-                          backgroundColor: '#ffffff',
-                          alignItems: 'center',
                           alignContent: 'center',
-                          width: 80,
-                          height: 80,
-                          padding: 12,
-                          top: 8,
-                          left: 120,
-                          borderRadius: 6,
-                          borderColor: '#000000'
+                          alignItems: 'center',
+                          top: 10,
+                          bottom: 6,
+                          elevation: 5,
+                          flexDirection: 'row'
                         }}
                       >
-                        <Ionicons name="image" size={30} color={'#000000'} />
-                        <Text>Add</Text>
+                        <TouchableOpacity
+                          onPress={() => setSelectedImage(null)}
+                        >
+                          <Text style={{ top: 10, paddingLeft: 16 }}>
+                            <Ionicons
+                              name="close-circle"
+                              size={24}
+                              color={'#000000'}
+                            />
+                          </Text>
+                        </TouchableOpacity>
+                        <Image
+                          source={{ uri: selectedImage }}
+                          style={{
+                            height: 200,
+                            width: '80%',
+                            left: 30,
+                            borderRadius: 6,
+                            bottom: 5
+                          }}
+                        />
                       </View>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </SafeAreaView>
-              {/*   FIM MODAL   */}
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </Modal>
-        <View>
-          <TextInput
-            style={{
-              marginHorizontal: 20,
-              borderColor: '#000',
-              borderWidth: 1,
-              borderRadius: 25,
-              height: 40,
-              paddingLeft: 10,
-              marginTop: 5
-            }}
-            placeholder="Pesquisar"
-            onChangeText={(str: string) => searchStories(str)}
-            autoCapitalize="none"
-          />
-          {stories.length > 0 && (
-            <FlatList
-              data={stories}
-              // @ts-ignore
-              renderItem={renderItem}
-              keyExtractor={(item: any) => item.id}
-              numColumns={1}
-              showsVerticalScrollIndicator={false}
-            />
-          )}
-          {stories.length == 0 && (
-            <View
-              style={{
-                top: 250,
-                justifyContent: 'center',
-                alignContent: 'center',
-                alignItems: 'center'
-              }}
+                    ) : (
+                      <TouchableOpacity onPress={() => pressHandler()}>
+                        <View
+                          style={{
+                            //backgroundColor: '#dddddda7',
+                            elevation: 8,
+                            backgroundColor: '#ffffff',
+                            alignItems: 'center',
+                            alignContent: 'center',
+                            width: 80,
+                            height: 80,
+                            padding: 12,
+                            top: 8,
+                            left: 120,
+                            borderRadius: 6,
+                            borderColor: '#000000'
+                          }}
+                        >
+                          <Ionicons name="image" size={30} color={'#000000'} />
+                          <Text>Add</Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </SafeAreaView>
+                {/*   FIM MODAL   */}
+              </ScrollView>
+            </KeyboardAvoidingView>
+            <BottomSheet
+              ref={bottomSheetRef}
+              activeHeight={height * 0.5}
+              backgroundColor={'white'}
+              backDropColor={'black'}
             >
-              <Text
+              <Text style={{ textAlign: 'center', fontSize: 22 }}>
+                Choose the option below :
+              </Text>
+              <View
                 style={{
-                  color: '#000000',
-                  fontSize: 20
+                  flexDirection: 'row',
+                  justifyContent: 'space-around',
+                  right: 30,
+                  top: 20,
+                  paddingLeft: 22
                 }}
               >
-                Your stories will appear here
-              </Text>
-            </View>
-          )}
-        </View>
-      </SafeAreaView>
+                <TouchableOpacity onPress={() => pressHandlerClose()}>
+                  <View
+                    style={{
+                      top: 40,
+                      width: 100,
+                      padding: 6,
+                      borderRadius: 7,
+                      backgroundColor: '#ffffff',
+                      elevation: 3,
+                      borderColor: '#000000',
+                      flexDirection: 'column',
+                      left: 20,
+                      alignContent: 'center',
+                      alignItems: 'center',
+                      height: '50%'
+                    }}
+                  >
+                    <Ionicons
+                      style={{ paddingBottom: 50 }}
+                      name="close-circle"
+                      size={32}
+                      color={'red'}
+                    />
+                    <Text style={{ fontSize: 13, bottom: 30 }}>Cancel</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => getAndSetImage(SELECT_IMAGE)}>
+                  <View
+                    style={{
+                      top: 40,
+                      width: 100,
+                      padding: 6,
+                      borderRadius: 6,
+                      backgroundColor: '#ffffff',
+                      elevation: 3,
+                      borderColor: '#000000',
+                      flexDirection: 'column',
+                      left: 20,
+                      alignContent: 'center',
+                      alignItems: 'center',
+                      height: '50%'
+                    }}
+                  >
+                    <Ionicons
+                      style={{ paddingBottom: 50 }}
+                      name="image"
+                      size={32}
+                      color={'#000000'}
+                    />
+                    <Text style={{ fontSize: 13, bottom: 30 }}>
+                      Select a Image
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => getAndSetImage(TAKE_PICTURE)}>
+                  <View
+                    style={{
+                      top: 40,
+                      width: 100,
+                      padding: 6,
+                      borderRadius: 6,
+                      backgroundColor: '#ffffff',
+                      elevation: 3,
+                      borderColor: '#000000',
+                      flexDirection: 'column',
+                      left: 20,
+                      alignContent: 'center',
+                      alignItems: 'center',
+                      height: '50%'
+                    }}
+                  >
+                    <Ionicons
+                      style={{ paddingBottom: 50 }}
+                      name="camera"
+                      size={32}
+                      color={'#000000'}
+                    />
+                    <Text style={{ fontSize: 13, bottom: 30 }}>
+                      Take a picture
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </BottomSheet>
+          </Modal>
+          <View>
+            <TextInput
+              style={{
+                marginHorizontal: 20,
+                borderColor: '#000',
+                borderWidth: 1,
+                borderRadius: 25,
+                height: 40,
+                paddingLeft: 10,
+                marginTop: 5
+              }}
+              placeholder="Pesquisar"
+              onChangeText={(str: string) => searchStories(str)}
+              autoCapitalize="none"
+            />
+            {stories.length > 0 && (
+              <FlatList
+                data={stories}
+                // @ts-ignore
+                renderItem={renderItem}
+                keyExtractor={(item: any) => item.id}
+                numColumns={1}
+                showsVerticalScrollIndicator={false}
+              />
+            )}
+            {stories.length == 0 && (
+              <View
+                style={{
+                  top: 250,
+                  justifyContent: 'center',
+                  alignContent: 'center',
+                  alignItems: 'center'
+                }}
+              >
+                <Text
+                  style={{
+                    color: '#000000',
+                    fontSize: 20
+                  }}
+                >
+                  Your stories will appear here
+                </Text>
+              </View>
+            )}
+          </View>
+        </SafeAreaView>
+        {visibleStories && stories.length > 0 && (
+          <StatusWrapper
+            statusData={stories}
+            visible={visibleStories}
+            onClose={(data: Boolean) => setVisibleStories(false)}
+          />
+        )}
+      </GestureHandlerRootView>
     </>
   )
 }

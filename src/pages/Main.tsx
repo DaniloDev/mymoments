@@ -90,8 +90,22 @@ const Main = () => {
     <>
       <StatusBar barStyle={'dark-content'} backgroundColor={'#ffffff'} />
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="tabs" component={Tabs} />
+        <Stack.Navigator
+          initialRouteName="Home"
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen
+            name="Home"
+            component={Home}
+            options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="Stories"
+            component={Stories}
+            options={{ headerShown: false }}
+          />
+
           <Stack.Screen
             name="Configs"
             component={Configs}
@@ -134,19 +148,24 @@ const Main = () => {
 
                   <TouchableOpacity
                     onPress={() => {
-                      Alert.alert('Delete', 'Are you sure to delete that ?', [
-                        {
-                          text: 'Cancel',
-                          onPress: () => {}
-                        },
-                        {
-                          text: 'OK',
-                          onPress: () => {
-                            deleteStory(route.params.story[0].id)
-                            navigation.navigate('Stories')
+                      Alert.alert(
+                        'Delete',
+                        'Are you sure to delete that ? ' +
+                          route.params.story[0].id,
+                        [
+                          {
+                            text: 'Cancel',
+                            onPress: () => {}
+                          },
+                          {
+                            text: 'OK',
+                            onPress: () => {
+                              deleteStory(route.params.story[0].id)
+                              navigation.navigate('Stories')
+                            }
                           }
-                        }
-                      ])
+                        ]
+                      )
                     }}
                   >
                     <Text style={{ right: 5, paddingLeft: 10 }}>

@@ -1,8 +1,9 @@
 export interface MomentsProps {
   data: {
-    id: number
+    id: string
     name: string
-    describe: string
+    describe?: string
+    image?: string
     date: Date
   }
   editar: any

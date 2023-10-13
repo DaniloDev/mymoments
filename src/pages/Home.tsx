@@ -7,30 +7,35 @@ import {
   Dimensions,
   FlatList,
   Image,
-  TouchableWithoutFeedback,
+  SafeAreaView,
   ImageBackground,
   Modal,
   KeyboardAvoidingView,
   Platform,
   TextInput,
   ScrollView,
-  TouchableOpacity
+  TouchableOpacity,
+  Keyboard,
+  PermissionsAndroid
 } from 'react-native'
 import { Input } from 'react-native-elements'
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import RNFS from 'react-native-fs'
 import getRealm from '../services/realm'
 import { MomentsProps } from '../models/Moments.interface'
-import { StorysProps } from '../models/Stories.interface'
 import StatusWrapper from '../components/StatusWrapper'
 import dataMoment from '../dataMoment'
 import { useFocusEffect } from '@react-navigation/native'
 import { useIsFocused } from '@react-navigation/native'
 
+import { format, formatDistance } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+
 import { MotiView } from 'moti'
 import Calendar from 'react-native-calendars/src/calendar'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { getID } from '../utils/functions'
+import { launchImageLibrary } from 'react-native-image-picker'
 Ionicons.loadFont
 
 const Home = ({ navigation, props }: any) => {
@@ -59,8 +64,76 @@ const Home = ({ navigation, props }: any) => {
   const [stories, setStories] = useState<StorysProps[]>([])
   const [auxStories, setAuxStories] = useState<StorysProps[]>([])
 
+  const [momentName, setMomentName] = useState('')
+  const [momentDescribe, setMomentDescribe] = useState('')
+
   const showModal = () => setVisible(true)
   const hideModal = () => setVisible(false)
+
+  const getAndSetImage = () => {
+    checkPermission()
+  }
+  const checkPermission = async () => {
+    // Function to check the platform
+    // If Platform is Android then check for permissions.
+
+    if (Platform.OS === 'ios') {
+      //downloadFile()
+      //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
+      selectImage()
+    } else {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+          {
+            title: 'Permisson',
+            message: 'We need permissson to that!'
+          }
+        )
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          // Start downloading
+          // downloadFile()
+          //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
+          selectImage()
+          //console.log('Storage Permission Granted.')
+          /*Alert.alert(
+            translate('GenarateQrcode.permissions.alerts.success.title'),
+            translate('GenarateQrcode.permissions.alerts.success.message')
+          )*/
+          console.log('Storage Permission Granted.')
+          Alert.alert('Success', 'Permmison to acess storage')
+        } else {
+          try {
+            const granted = await PermissionsAndroid.request(
+              PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+              {
+                title: 'Permisson',
+                message: 'We need permissson to that!'
+              }
+            )
+            if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+              // Start downloading
+              // downloadFile()
+              //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
+              selectImage()
+              //console.log('Storage Permission Granted.')
+              /*Alert.alert(
+                  translate('GenarateQrcode.permissions.alerts.success.title'),
+                  translate('GenarateQrcode.permissions.alerts.success.message')
+                )*/
+              console.log('Storage Permission Granted.')
+              Alert.alert('Success', 'Permmison to acess storage')
+            } else {
+              Alert.alert('Error', 'Some Error here')
+            }
+          } catch (error) {}
+        }
+      } catch (err) {
+        // To handle permission related exception
+        //   console.log('++++' + err)
+      }
+    }
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -78,7 +151,13 @@ const Home = ({ navigation, props }: any) => {
 
   const renderItem = ({ item, index }) => {
     return (
-      <TouchableOpacity onPress={() => Alert.alert('AQUI')}>
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate('Stories', {
+            moment_id: item.id
+          })
+        }
+      >
         <MotiView
           style={styles.listContainer}
           from={{ opacity: 0, translateY: 50 }}
@@ -104,7 +183,13 @@ const Home = ({ navigation, props }: any) => {
           </View>
           <View style={{ alignContent: 'flex-start', bottom: 40 }}>
             <Text style={styles.nameText}>{item.name}</Text>
-            <Text style={styles.updatedAtText}>Updated {item.updatedAt}</Text>
+            <Text style={styles.updatedAtText}>
+              Updated{' '}
+              {formatDistance(new Date(item.date), new Date(), {
+                locale: undefined,
+                addSuffix: false
+              })}
+            </Text>
             <Text style={styles.priceText}>{item.describe}</Text>
           </View>
         </MotiView>
@@ -166,14 +251,31 @@ const Home = ({ navigation, props }: any) => {
     }
   }
 
+  const removeAccent = (str: string) => {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  }
+
+  const searchStories = (str: string) => {
+    const arrStories = auxStories
+    str = removeAccent(str).toUpperCase()
+    setStories(
+      arrStories.filter((s) =>
+        (
+          removeAccent(s.describe).toUpperCase() ||
+          removeAccent(s.placeName).toUpperCase()
+        ).includes(str)
+      )
+    )
+  }
+
   const filterFeelEmojis = (id: string) => {
-    if (id?.toString().length > 0) {
+    if (id.length > 0) {
       let feelEmojis = [
-        { text: '😄 Awesome', id: 'awesome' },
-        { text: '😊 Pretty good', id: 'pretty_good' },
-        { text: '😐 Quite OK', id: 'quite_ok' },
-        { text: '😔 Kind of bad', id: 'kind_of_bad' },
-        { text: '😥 Horrible', id: 'horrible' }
+        { text: '😄', id: 'awesome' },
+        { text: '😊', id: 'pretty_good' },
+        { text: '😐', id: 'quite_ok' },
+        { text: '😔', id: 'kind_of_bad' },
+        { text: '😥', id: 'horrible' }
       ]
 
       let sendFeelEmojis = feelEmojis.filter((element) => element.id === id)
@@ -183,16 +285,16 @@ const Home = ({ navigation, props }: any) => {
   }
 
   const filterReasonEmojis = (id: string) => {
-    if (id?.toString().length > 0) {
+    if (id.length > 0) {
       let reasonEmojis = [
-        { text: '👪 Family', id: 'family' },
-        { text: '🍲 Food', id: 'food' },
-        { text: '👬 Friends', id: 'friends' },
-        { text: '👨🏼‍⚕️ Health', id: 'health' },
-        { text: '🪂 Hobbies', id: 'hobbies' },
-        { text: '🚴 Sport', id: 'sport' },
-        { text: '💼 Work', id: 'work' },
-        { text: '❤️ Relationship', id: 'relationship' }
+        { text: '👪', id: 'family' },
+        { text: '🍲', id: 'food' },
+        { text: '👬', id: 'friends' },
+        { text: '👨🏼‍⚕️', id: 'health' },
+        { text: '🪂', id: 'hobbies' },
+        { text: '🚴', id: 'sport' },
+        { text: '💼', id: 'work' },
+        { text: '❤️', id: 'relationship' }
       ]
 
       let sendReasonEmojis = reasonEmojis.filter((element) => element.id === id)
@@ -200,17 +302,140 @@ const Home = ({ navigation, props }: any) => {
       return sendReasonEmojis[0].text
     }
   }
+
+  const saveMoment = async (data: MomentsProps) => {
+    const realm = await getRealm()
+    const dbName = 'Moment'
+    const id = await getID(22)
+
+    const dadosMoment = {
+      id: id,
+      name: data.name,
+      describe: data.describe,
+      image: data.image,
+      date: data.date
+    }
+    realm.write(() => {
+      realm.create(dbName, dadosMoment)
+    })
+  }
+
+  const selectImage = async () => {
+    launchImageLibrary(
+      {
+        title: 'Selecione uma imagem',
+        storageOptions: {
+          //skipBackup: true,
+          path: 'images'
+        }
+      },
+      (response) => {
+        // console.log('RES{ONSE', response)
+        if (response.didCancel) {
+          console.log('Seleção de imagem cancelada')
+          setSelectedImage(selectedImageAux)
+        } else if (response.error) {
+          console.error('Erro ao selecionar imagem:', response.error)
+        } else {
+          console.log('RESPONSE IN selectImage ', response)
+          setSelectedImage(response.assets[0].uri)
+          setSelectedImageAux(response.assets[0].uri)
+          const imagePath = response.assets[0].originalPath
+          RNFS.readFile(imagePath, 'base64').then((base64String) => {
+            setImageInBase64(
+              `data:${response.assets[0].type};base64,${base64String}`
+            )
+            // console.log('IMAGEINBASE64 ', imageInBase64)
+          })
+        }
+      }
+    )
+  }
+
+  const handleCanSave = async () => {
+    if (momentName.trim().toString().length >= 6) {
+      try {
+        const data = {
+          name: momentName,
+          describe: momentDescribe,
+          image: imageInBase64,
+          date: new Date()
+        }
+
+        await saveMoment(data)
+
+        setMomentName('')
+        setMomentDescribe('')
+        setSelectedImage(null)
+        setImageInBase64(null)
+        hideModal()
+        Keyboard.dismiss()
+        Alert.alert('Success', 'Nice')
+      } catch (err) {
+        Alert.alert(err)
+      }
+    } else {
+      Alert.alert(
+        'Error',
+        'Fill in the  "Your MOMENT" field which must have at least 6 characters and select "How did you feel"'
+      )
+    }
+  }
+
+  /*const updateStory = async () => {
+    if (idEdit === null) {
+      Alert.alert('Você não pode editar!')
+      return
+    }
+
+    const emojiCategory = checkCategoryToTheMoment(optionsFeel[0])
+
+    const realm = await getRealm()
+    const dbName = 'Story'
+    const response = {
+      id: idEdit,
+      describe: storyDescribe,
+      feel: optionsFeel[0],
+      reason: optionsReason[0],
+      placeName: placeName,
+      image: imageInBase64,
+      date: new Date(),
+      emojiCategory: emojiCategory
+    }
+
+    await realm.write(() => {
+      realm.create(dbName, response, 'modified')
+    })
+
+    setStoryDescribe('')
+    setOptionsFeel([])
+    setOptionsReason([])
+    setPlaceName('')
+    setSelectedImage(null)
+    setImageInBase64(null)
+    hideModal()
+    Keyboard.dismiss()
+  }*/
   return (
     <>
       <View style={{ backgroundColor: '#ffffff' }}>
         <TouchableOpacity onPress={showModal}>
-          <Text style={{ textAlign: 'right', right: 20 }}>
+          <Text style={{ textAlign: 'right', right: 28 }}>
             <Ionicons name="add-circle" size={25} color={'#000000'} />
           </Text>
         </TouchableOpacity>
       </View>
       <View style={{ backgroundColor: '#ffffff' }}>
-        <Text style={{ textAlign: 'center' }}>Moments</Text>
+        <Text
+          style={{
+            textAlign: 'left',
+            left: 30,
+            fontWeight: 'bold',
+            fontSize: 32
+          }}
+        >
+          Moments
+        </Text>
       </View>
       <SafeAreaView style={styles.container}>
         {/*   INICIO MODAL        */}
@@ -270,7 +495,7 @@ const Home = ({ navigation, props }: any) => {
                     </TouchableOpacity>
                   ) : (
                     <TouchableOpacity
-                      onPress={() => {}}
+                      onPress={() => handleCanSave()}
                       // disabled={disabledButtonSave}
                     >
                       <Text
@@ -300,7 +525,7 @@ const Home = ({ navigation, props }: any) => {
                       color: '#000000'
                     }}
                   >
-                    Your story
+                    Moment Name
                   </Text>
 
                   <Input
@@ -323,13 +548,13 @@ const Home = ({ navigation, props }: any) => {
                       paddingRight: 25
                     }}
                     placeholder={
-                      'Describe your day in one setence. Take the time to think about waht has made your day.'
+                      'Give a name to your Moment Name to identification'
                     }
-                    value={storyDescribe}
-                    onChangeText={(str) => setStoryDescribe(str)}
+                    value={momentName}
+                    onChangeText={(str) => setMomentName(str)}
                     multiline={true}
                     cursorColor={'#000000'}
-                    maxLength={50}
+                    maxLength={31}
                     autoCapitalize={'none'}
                   />
 
@@ -351,33 +576,12 @@ const Home = ({ navigation, props }: any) => {
                     style={{
                       fontSize: 22,
                       fontWeight: 'bold',
-                      color: '#000000'
-                    }}
-                  >
-                    How did you feel?
-                  </Text>
-
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 'bold',
-                      color: '#000000',
-                      top: 20
-                    }}
-                  >
-                    What was the reason?
-                  </Text>
-
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 'bold',
                       color: '#000000',
                       top: 30,
                       paddingBottom: 20
                     }}
                   >
-                    Was thre a special place?
+                    Descripition
                   </Text>
                   <Input
                     style={{
@@ -398,12 +602,12 @@ const Home = ({ navigation, props }: any) => {
                       paddingLeft: 25,
                       paddingBottom: 20
                     }}
-                    placeholder={'type a place name'}
-                    value={placeName}
-                    onChangeText={(str) => setPlaceName(str)}
+                    placeholder={'Describe that moment'}
+                    value={momentDescribe}
+                    onChangeText={(str) => setMomentDescribe(str)}
                     multiline={true}
                     cursorColor={'#000000'}
-                    maxLength={40}
+                    maxLength={60}
                   />
                   <Text
                     style={{
@@ -495,7 +699,7 @@ const Home = ({ navigation, props }: any) => {
           />
           {moments && (
             <FlatList
-              data={dataMoment}
+              data={moments}
               renderItem={renderItem}
               keyExtractor={(item) => item.id}
               numColumns={1}
@@ -533,8 +737,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffff',
-    marginBottom: 150,
-    paddingTop: 10
+    padding: 10
   },
   viewBlocoMoment: {
     backgroundColor: 'red',
@@ -542,13 +745,14 @@ const styles = StyleSheet.create({
   },
 
   listContainer: {
-    left: 25,
+    left: 15,
     width: Dimensions.get('window').width - 70,
     backgroundColor: 'white',
     margin: 10,
     borderRadius: 20,
     height: 280,
-    elevation: 3
+    elevation: 3,
+    padding: 10
   },
   imageContainer: {
     margin: 15,
@@ -577,7 +781,7 @@ const styles = StyleSheet.create({
     marginLeft: 15
   },
   priceText: {
-    color: 'orange',
+    color: '#6d20dab8',
     fontWeight: 'bold',
     marginLeft: 15,
     marginTop: 20,
@@ -595,6 +799,13 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     width: '100%'
+  },
+  grey: {
+    backgroundColor: '#ffffff',
+    borderRadius: 30,
+    bottom: 14,
+    top: 14,
+    elevation: 3
   },
   contentContainer: {
     justifyContent: 'center',

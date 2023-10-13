@@ -1,11 +1,12 @@
 export interface StorysProps {
   data: {
-    id: number
+    id: string
+    moment_id: string
     describe: string
     feel: string
     reason: string
-    placeName: string
-    image: string
+    placeName?: string
+    image?: string
     date: Date
     emojiCategory?: String
   }

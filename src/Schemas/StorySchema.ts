@@ -4,7 +4,8 @@ const StorySchema: ObjectSchema = {
   name: 'Story',
   primaryKey: 'id',
   properties: {
-    id: { type: 'int', indexed: true },
+    id: { type: 'string', indexed: true },
+    moment_id: 'string',
     describe: 'string',
     feel: 'string',
     reason: 'string',

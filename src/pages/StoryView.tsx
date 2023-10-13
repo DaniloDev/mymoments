@@ -13,36 +13,39 @@ const StoryView = (props: any) => {
 
   const filterFeelEmojis = (id: string) => {
     if (id.length > 0) {
-      let feelEmojis = [
-        { text: '😄 Awesome', id: 'awesome' },
-        { text: '😊 Pretty good', id: 'pretty_good' },
-        { text: '😐 Quite OK', id: 'quite_ok' },
-        { text: '😔 Kind of bad', id: 'kind_of_bad' },
-        { text: '😥 Horrible', id: 'horrible' }
-      ]
-
-      let sendFeelEmojis = feelEmojis.filter((element) => element.id === id)
-
-      return sendFeelEmojis[0].text
+      if (id == 'awesome') {
+        return '😄 Awesome'
+      } else if (id == 'pretty_good') {
+        return '😊 Pretty good'
+      } else if (id == 'quite_ok') {
+        return '😐 Quite OK'
+      } else if (id == 'kind_of_bad') {
+        return '😔'
+      } else if (id == 'horrible') {
+        return '😥 Horrible'
+      }
     }
   }
 
   const filterReasonEmojis = (id: string) => {
     if (id.length > 0) {
-      let reasonEmojis = [
-        { text: '👪 Family', id: 'family' },
-        { text: '🍲 Food', id: 'food' },
-        { text: '👬 Friends', id: 'friends' },
-        { text: '👨🏼‍⚕️ Health', id: 'health' },
-        { text: '🪂 Hobbies', id: 'hobbies' },
-        { text: '🚴 Sport', id: 'sport' },
-        { text: '💼 Work', id: 'work' },
-        { text: '❤️ Relationship', id: 'relationship' }
-      ]
-
-      let sendReasonEmojis = reasonEmojis.filter((element) => element.id === id)
-
-      return sendReasonEmojis[0].text
+      if (id == 'family') {
+        return '👪 Family'
+      } else if (id == 'food') {
+        return '🍲 Food'
+      } else if (id == 'friends') {
+        return '👬 Friends'
+      } else if (id == 'health') {
+        return '👨🏼‍⚕️ Health'
+      } else if (id == 'hobbies') {
+        return '🪂 Hobbies'
+      } else if (id == 'sport') {
+        return '🚴 Sport'
+      } else if (id == 'work') {
+        return '💼 Work'
+      } else if (id == 'relationship') {
+        return '❤️ Relationship'
+      }
     }
   }
   return (
