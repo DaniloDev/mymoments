@@ -81,8 +81,8 @@ const Main = () => {
     const realm = await getRealm()
 
     realm.write(() => {
-      if (realm.objects(dbName).filtered('id =' + id).length > 0) {
-        realm.delete(realm.objects(dbName).filtered('id =' + id))
+      if (realm.objects(dbName).filtered(`id = '${id}'`).length > 0) {
+        realm.delete(realm.objects(dbName).filtered(`id = '${id}'`))
       }
     })
   }

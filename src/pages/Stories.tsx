@@ -48,6 +48,7 @@ const Stories = (props: any) => {
   const TAKE_PICTURE = 'TAKE_PICTURE'
   var selecionados: any
   const [visible, setVisible] = useState(false)
+  const [canEdited, setCanEdited] = useState(false)
   const [storyDescribe, setStoryDescribe] = useState('')
   const [placeName, setPlaceName] = useState('')
   const [disabledButtonSave, setDisabledButtonSave] = useState(true)
@@ -208,9 +209,6 @@ const Stories = (props: any) => {
   )
 
   const loadStories = async () => {
-    if (openModal == true) {
-      showModal()
-    }
     try {
       const dbName = 'Story'
       const realm = await getRealm()
@@ -234,7 +232,8 @@ const Stories = (props: any) => {
     }
     // console.log('STORIES', stories)
 
-    if (props.route.params.storyEdit[0]?.id.toString().length > 0) {
+    if (props.route.params.storyEdit[0].id !== null) {
+      setIdEdit(props.route.params.storyEdit[0].id)
       setIdEdit(props.route.params.storyEdit[0].id)
       setStoryDescribe(props.route.params.storyEdit[0].describe)
       setOptionsFeel(props.route.params.storyEdit[0].feel)
@@ -243,7 +242,7 @@ const Stories = (props: any) => {
       setSelectedImage(props.route.params.storyEdit[0].image)
       setSelectedImageAux(props.route.params.storyEdit[0].image)
       setImageInBase64(props.route.params.storyEdit[0].image)
-      setOpenModal(true)
+      showModal()
     }
   }
 
@@ -469,19 +468,21 @@ const Stories = (props: any) => {
     await realm.write(() => {
       realm.create(dbName, response, 'modified')
     })
+    props.route.params.storyEdit[0].id = null
 
+    setIdEdit(null)
+    setCanEdited(false)
     setStoryDescribe('')
     setOptionsFeel([])
     setOptionsReason([])
     setPlaceName('')
     setSelectedImage(null)
     setImageInBase64(null)
-    setIdEdit(null)
+    hideModal()
     loadStories()
 
-    //setChangeStory('modified')
-    hideModal()
-    setOpenModal(false)
+    console.log('IN UPDATE PROPS ', props.route.params.storyEdit[0].id)
+
     Keyboard.dismiss()
   }
 
@@ -554,7 +555,8 @@ const Stories = (props: any) => {
         <View
           style={{
             backgroundColor: '#ffffff',
-            flexDirection: 'row'
+            flexDirection: 'row',
+            justifyContent: 'space-between'
           }}
         >
           <TouchableOpacity
@@ -567,7 +569,12 @@ const Stories = (props: any) => {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setVisibleStories(true)}
-            style={{ width: 25, height: 25, left: 280 }}
+            style={{
+              width: 25,
+              height: 25,
+              left: 110,
+              marginRight: 8
+            }}
           >
             <Text style={{ textAlign: 'center' }}>
               <Ionicons name="images" size={25} color={'#000000'} />
@@ -575,7 +582,12 @@ const Stories = (props: any) => {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={showModal}
-            style={{ width: 25, height: 25, left: 290 }}
+            style={{
+              width: 25,
+              height: 25,
+              right: 30,
+              marginRight: 2
+            }}
           >
             <Text style={{ textAlign: 'center' }}>
               <Ionicons name="add-circle" size={25} color={'#000000'} />
@@ -1044,6 +1056,7 @@ const styles = StyleSheet.create({
     width: Dimensions.get('window').width - 50,
     backgroundColor: 'white',
     margin: 10,
+    marginBottom: 10,
     borderRadius: 20,
     borderBottomWidth: 0.1,
     elevation: 1,
