@@ -51,6 +51,7 @@ const Stories = (props: any) => {
   const [canEdited, setCanEdited] = useState(false)
   const [storyDescribe, setStoryDescribe] = useState('')
   const [placeName, setPlaceName] = useState('')
+  const [searchText, setSearchText] = useState('')
   const [disabledButtonSave, setDisabledButtonSave] = useState(true)
   const [selectedImage, setSelectedImage] = useState(null)
   const [selectedImageAux, setSelectedImageAux] = useState(null)
@@ -251,14 +252,14 @@ const Stories = (props: any) => {
   }
 
   const searchStories = (str: string) => {
+    setSearchText(str)
     const arrStories = auxStories
     str = removeAccent(str).toUpperCase()
     setStories(
-      arrStories.filter((s) =>
-        (
-          removeAccent(s.describe).toUpperCase() ||
-          removeAccent(s.placeName).toUpperCase()
-        ).includes(str)
+      arrStories.filter(
+        (s) =>
+          removeAccent(s.describe).toUpperCase().includes(str) ||
+          removeAccent(s.placeName).toUpperCase().includes(str)
       )
     )
   }
@@ -490,7 +491,7 @@ const Stories = (props: any) => {
     //console.log('renderItem ', stories)
     return (
       <TouchableOpacity
-        onPress={() =>
+        onPress={() => {
           props.navigation.navigate('StoryView', {
             story: [
               {
@@ -504,7 +505,8 @@ const Stories = (props: any) => {
               }
             ]
           })
-        }
+          setSearchText('')
+        }}
       >
         <MotiView
           style={styles.listContainer}
@@ -917,7 +919,7 @@ const Stories = (props: any) => {
                     }}
                   >
                     <Ionicons
-                      style={{ paddingBottom: 50 }}
+                      style={{ paddingBottom: 40 }}
                       name="close-circle"
                       size={32}
                       color={'red'}
@@ -944,7 +946,7 @@ const Stories = (props: any) => {
                     }}
                   >
                     <Ionicons
-                      style={{ paddingBottom: 50 }}
+                      style={{ paddingBottom: 40 }}
                       name="image"
                       size={32}
                       color={'#000000'}
@@ -997,6 +999,7 @@ const Stories = (props: any) => {
                 paddingLeft: 10,
                 marginTop: 5
               }}
+              value={searchText}
               placeholder="Pesquisar"
               onChangeText={(str: string) => searchStories(str)}
               autoCapitalize="none"

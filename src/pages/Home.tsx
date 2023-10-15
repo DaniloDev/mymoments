@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import {
   View,
   Text,
@@ -16,7 +16,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Keyboard,
-  PermissionsAndroid
+  PermissionsAndroid,
+  useWindowDimensions
 } from 'react-native'
 import { Input } from 'react-native-elements'
 import RNFS from 'react-native-fs'
@@ -35,52 +36,64 @@ import Calendar from 'react-native-calendars/src/calendar'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { getID } from '../utils/functions'
-import { launchImageLibrary } from 'react-native-image-picker'
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker'
 Ionicons.loadFont
 
 const Home = ({ navigation, props }: any) => {
+  const SELECT_IMAGE = 'SELECT_IMAGE'
+  const TAKE_PICTURE = 'TAKE_PICTURE'
   const [goodTimes, setGoodTimes] = useState<StorysProps[]>([])
   const [routherTimes, setRoutherTimes] = useState<StorysProps[]>([])
   const [visibleGoodStories, setVisibleGoodStories] = useState(false)
   const [visibleRougherStories, setVisibleRougherStories] = useState(false)
 
-  const [moments, setMoments] = useState([])
+  const [moments, setMoments] = useState<MomentsProps[]>([])
+  const [auxMoments, setAuxMoments] = useState<MomentsProps[]>([])
+
   const [visible, setVisible] = useState(false)
 
   const isFocused = useIsFocused()
   const cardPurple = require('./../assets/images/cardpurple.png')
 
   const [idEdit, setIdEdit] = useState(null)
-  const [dateMarked, setDateMarked] = useState('')
 
-  var selecionados: any
-
-  const [storyDescribe, setStoryDescribe] = useState('')
-  const [placeName, setPlaceName] = useState('')
-  const [disabledButtonSave, setDisabledButtonSave] = useState(true)
   const [selectedImage, setSelectedImage] = useState(null)
   const [selectedImageAux, setSelectedImageAux] = useState(null)
   const [imageInBase64, setImageInBase64] = useState(null)
-  const [stories, setStories] = useState<StorysProps[]>([])
-  const [auxStories, setAuxStories] = useState<StorysProps[]>([])
 
   const [momentName, setMomentName] = useState('')
   const [momentDescribe, setMomentDescribe] = useState('')
+  const [searchText, setSeaechText] = useState('')
 
   const showModal = () => setVisible(true)
   const hideModal = () => setVisible(false)
 
-  const getAndSetImage = () => {
-    checkPermission()
+  const { height } = useWindowDimensions()
+  const bottomSheetRef = useRef()
+
+  const pressHandler = useCallback(() => {
+    bottomSheetRef.current.expand()
+  }, [])
+
+  const pressHandlerClose = useCallback(() => {
+    bottomSheetRef.current.close()
+  }, [])
+
+  const getAndSetImage = (param: string) => {
+    checkPermission(param)
   }
-  const checkPermission = async () => {
+  const checkPermission = async (param) => {
     // Function to check the platform
     // If Platform is Android then check for permissions.
 
     if (Platform.OS === 'ios') {
       //downloadFile()
       //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
-      selectImage()
+      if (param == SELECT_IMAGE) {
+        selectImage()
+      } else if (param == TAKE_PICTURE) {
+        takeaPicture()
+      }
     } else {
       try {
         const granted = await PermissionsAndroid.request(
@@ -94,7 +107,11 @@ const Home = ({ navigation, props }: any) => {
           // Start downloading
           // downloadFile()
           //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
-          selectImage()
+          if (param == SELECT_IMAGE) {
+            selectImage()
+          } else if (param == TAKE_PICTURE) {
+            takeaPicture()
+          }
           //console.log('Storage Permission Granted.')
           /*Alert.alert(
             translate('GenarateQrcode.permissions.alerts.success.title'),
@@ -115,7 +132,11 @@ const Home = ({ navigation, props }: any) => {
               // Start downloading
               // downloadFile()
               //handleDownload() CHAMA A FUNCÃO DE PEGAR IMAGEM DO CELULAR
-              selectImage()
+              if (param == SELECT_IMAGE) {
+                selectImage()
+              } else if (param == TAKE_PICTURE) {
+                takeaPicture()
+              }
               //console.log('Storage Permission Granted.')
               /*Alert.alert(
                   translate('GenarateQrcode.permissions.alerts.success.title'),
@@ -142,6 +163,7 @@ const Home = ({ navigation, props }: any) => {
         const realm = await getRealm()
         const data = realm.objects(dbName)
         setMoments(data)
+        setAuxMoments(data)
         console.log('MOMENTS ', moments)
       }
 
@@ -152,11 +174,12 @@ const Home = ({ navigation, props }: any) => {
   const renderItem = ({ item, index }) => {
     return (
       <TouchableOpacity
-        onPress={() =>
+        onPress={() => {
           navigation.navigate('Stories', {
             moment_id: item.id
           })
-        }
+          setSeaechText('')
+        }}
       >
         <MotiView
           style={styles.listContainer}
@@ -255,15 +278,17 @@ const Home = ({ navigation, props }: any) => {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   }
 
-  const searchStories = (str: string) => {
-    const arrStories = auxStories
+  const searchMoments = (str: string) => {
+    setSeaechText(str)
+    const arrMoments = auxMoments
+
+    console.log('searchMoments ', auxMoments)
     str = removeAccent(str).toUpperCase()
-    setStories(
-      arrStories.filter((s) =>
-        (
-          removeAccent(s.describe).toUpperCase() ||
-          removeAccent(s.placeName).toUpperCase()
-        ).includes(str)
+    setMoments(
+      arrMoments.filter(
+        (s) =>
+          removeAccent(s.name).toUpperCase().includes(str) ||
+          removeAccent(s.describe).toUpperCase().includes(str)
       )
     )
   }
@@ -321,7 +346,41 @@ const Home = ({ navigation, props }: any) => {
   }
 
   const selectImage = async () => {
+    pressHandlerClose()
     launchImageLibrary(
+      {
+        title: 'Selecione uma imagem',
+        storageOptions: {
+          //skipBackup: true,
+          path: 'images'
+        }
+      },
+      (response) => {
+        // console.log('RES{ONSE', response)
+        if (response.didCancel) {
+          console.log('Seleção de imagem cancelada')
+          setSelectedImage(selectedImageAux)
+        } else if (response.error) {
+          console.error('Erro ao selecionar imagem:', response.error)
+        } else {
+          console.log('RESPONSE IN selectImage ', response)
+          setSelectedImage(response.assets[0].uri)
+          setSelectedImageAux(response.assets[0].uri)
+          const imagePath = response.assets[0].originalPath
+          RNFS.readFile(imagePath, 'base64').then((base64String) => {
+            setImageInBase64(
+              `data:${response.assets[0].type};base64,${base64String}`
+            )
+            // console.log('IMAGEINBASE64 ', imageInBase64)
+          })
+        }
+      }
+    )
+  }
+
+  const takeaPicture = async () => {
+    pressHandlerClose()
+    launchCamera(
       {
         title: 'Selecione uma imagem',
         storageOptions: {
@@ -382,16 +441,14 @@ const Home = ({ navigation, props }: any) => {
     }
   }
 
-  /*const updateStory = async () => {
+  /*const updateMoment = async () => {
     if (idEdit === null) {
       Alert.alert('Você não pode editar!')
       return
     }
 
-    const emojiCategory = checkCategoryToTheMoment(optionsFeel[0])
-
     const realm = await getRealm()
-    const dbName = 'Story'
+    const dbName = 'Moment'
     const response = {
       id: idEdit,
       describe: storyDescribe,
@@ -693,11 +750,12 @@ const Home = ({ navigation, props }: any) => {
               paddingLeft: 10,
               marginTop: 5
             }}
+            value={searchText}
             placeholder="Pesquisar"
-            onChangeText={(str: string) => {}}
+            onChangeText={(str: string) => searchMoments(str)}
             autoCapitalize="none"
           />
-          {moments && (
+          {moments.toString().length > 0 && (
             <FlatList
               data={moments}
               renderItem={renderItem}
@@ -706,7 +764,7 @@ const Home = ({ navigation, props }: any) => {
               showsVerticalScrollIndicator={false}
             />
           )}
-          {!moments && (
+          {moments.toString().length == 0 && (
             <View
               style={{
                 top: 250,
@@ -749,6 +807,7 @@ const styles = StyleSheet.create({
     width: Dimensions.get('window').width - 70,
     backgroundColor: 'white',
     margin: 10,
+    marginBottom: 10,
     borderRadius: 20,
     height: 280,
     elevation: 3,
