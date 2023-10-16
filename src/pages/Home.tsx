@@ -35,10 +35,13 @@ import { ptBR } from 'date-fns/locale'
 import { MotiView } from 'moti'
 import Calendar from 'react-native-calendars/src/calendar'
 
-import Ionicons from 'react-native-vector-icons/Ionicons'
 import { getID } from '../utils/functions'
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker'
+import BottomSheet from '../components/BottomSheet'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 Ionicons.loadFont
+
+import Ionicons from 'react-native-vector-icons/Ionicons'
 
 const Home = ({ navigation, props }: any) => {
   const SELECT_IMAGE = 'SELECT_IMAGE'
@@ -63,9 +66,8 @@ const Home = ({ navigation, props }: any) => {
   const [imageInBase64, setImageInBase64] = useState(null)
 
   const [momentName, setMomentName] = useState('')
+  const [dateMarked, setDateMarked] = useState<any>(null)
   const [momentDescribe, setMomentDescribe] = useState('')
-
-  const [dateMarked, setDateMarked] = useState('')
 
   const [searchText, setSeaechText] = useState('')
 
@@ -165,7 +167,7 @@ const Home = ({ navigation, props }: any) => {
       const dbName = 'Moment'
       const loadMoments = async () => {
         const realm = await getRealm()
-        const data = realm.objects(dbName)
+        const data = realm.objects(dbName).sorted('updatedAT', true)
         setMoments(data)
         setAuxMoments(data)
         console.log('MOMENTS ', moments)
@@ -194,7 +196,7 @@ const Home = ({ navigation, props }: any) => {
           <View style={styles.imageContainer}>
             {item.image ? (
               <Image
-                source={item.image}
+                source={{ uri: item.image }}
                 style={styles.image}
                 resizeMode="stretch"
               />
@@ -210,14 +212,31 @@ const Home = ({ navigation, props }: any) => {
           </View>
           <View style={{ alignContent: 'flex-start', bottom: 40 }}>
             <Text style={styles.nameText}>{item.name}</Text>
-            <Text style={styles.updatedAtText}>
-              Updated{' '}
-              {formatDistance(new Date(item.date), new Date(), {
+            <View style={{ flexDirection: 'row' }}>
+              <Ionicons
+                style={{ top: 6, paddingLeft: 16 }}
+                name="calendar-sharp"
+                size={18}
+                color={'#154'}
+              />
+              <Text style={styles.dateText}>
+                {
+                  format(item.date, 'EEEE, MMM dd, yyyy')
+                  /*formatDistance(new Date(item.updatedAT), new Date(), {
                 locale: undefined,
                 addSuffix: false
-              })}
-            </Text>
-            <Text style={styles.priceText}>{item.describe}</Text>
+              })*/
+
+                  /* item.date
+                  .toISOString()
+                  .substr(0, 10)
+                  .split('-')
+                  .reverse()
+                  .join('-')*/
+                }
+              </Text>
+            </View>
+            <Text style={styles.describeText}>{item.describe}</Text>
           </View>
         </MotiView>
       </TouchableOpacity>
@@ -342,7 +361,8 @@ const Home = ({ navigation, props }: any) => {
       name: data.name,
       describe: data.describe,
       image: data.image,
-      date: data.date
+      date: data.date,
+      updatedAT: data.updatedAT
     }
     realm.write(() => {
       realm.create(dbName, dadosMoment)
@@ -422,13 +442,15 @@ const Home = ({ navigation, props }: any) => {
           name: momentName,
           describe: momentDescribe,
           image: imageInBase64,
-          date: new Date()
+          date: dateMarked == null ? new Date() : new Date(dateMarked),
+          updatedAT: new Date()
         }
 
         await saveMoment(data)
 
         setMomentName('')
         setMomentDescribe('')
+        setDateMarked(null)
         setSelectedImage(null)
         setImageInBase64(null)
         hideModal()
@@ -492,13 +514,20 @@ const Home = ({ navigation, props }: any) => {
             textAlign: 'left',
             left: 30,
             fontWeight: 'bold',
-            fontSize: 32
+            fontSize: 32,
+            bottom: 20
           }}
         >
           Moments
         </Text>
       </View>
       <SafeAreaView style={styles.container}>
+        <BottomSheet
+          ref={bottomSheetRef}
+          activeHeight={height * 0.5}
+          backgroundColor={'white'}
+          backDropColor={'black'}
+        />
         {/*   INICIO MODAL        */}
         <Modal visible={visible} animationType="slide">
           <KeyboardAvoidingView
@@ -529,6 +558,7 @@ const Home = ({ navigation, props }: any) => {
                       setSelectedImage(null)
                       setImageInBase64(null)
                       setIdEdit(null)
+                      setDateMarked(null)
                     }}
                   >
                     <Text
@@ -630,7 +660,31 @@ const Home = ({ navigation, props }: any) => {
                   </Text>
 
                   <Calendar
+                    initialDate={
+                      dateMarked == null
+                        ? new Date().toISOString().substr(0, 10)
+                        : new Date(dateMarked).toISOString().substr(0, 10)
+                    }
                     onDayPress={(date) => setDateMarked(date.dateString)}
+                    markingType="multi-dot"
+                    markedDates={{
+                      [dateMarked]: {
+                        selected: true,
+                        selectedColor: '#8c04bd',
+                        selectedTextColor: 'white',
+                        marked: true
+                      }
+                    }}
+                    theme={{
+                      backgroundColor: '#ffffff',
+                      calendarBackground: '#ffffff',
+                      textSectionTitleColor: '#b6c1cd',
+                      selectedDayBackgroundColor: '#00adf5',
+                      selectedDayTextColor: '#ffffff',
+                      todayTextColor: '#00adf5',
+                      dayTextColor: '#2d4150',
+                      textDisabledColor: '#d9e'
+                    }}
                   />
 
                   <Text
@@ -714,7 +768,7 @@ const Home = ({ navigation, props }: any) => {
                       />
                     </View>
                   ) : (
-                    <TouchableOpacity onPress={() => {}}>
+                    <TouchableOpacity onPress={() => pressHandler()}>
                       <View
                         style={{
                           //backgroundColor: '#dddddda7',
@@ -741,6 +795,110 @@ const Home = ({ navigation, props }: any) => {
               {/*   FIM MODAL   */}
             </ScrollView>
           </KeyboardAvoidingView>
+          <BottomSheet
+            ref={bottomSheetRef}
+            activeHeight={height * 0.5}
+            backgroundColor={'white'}
+            backDropColor={'black'}
+          >
+            <Text style={{ textAlign: 'center', fontSize: 22 }}>
+              Choose the option below :
+            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-around',
+                right: 30,
+                top: 20,
+                paddingLeft: 22
+              }}
+            >
+              <TouchableOpacity onPress={() => pressHandlerClose()}>
+                <View
+                  style={{
+                    top: 40,
+                    width: 100,
+                    padding: 6,
+                    borderRadius: 7,
+                    backgroundColor: '#ffffff',
+                    elevation: 3,
+                    borderColor: '#000000',
+                    flexDirection: 'column',
+                    left: 20,
+                    alignContent: 'center',
+                    alignItems: 'center',
+                    height: '50%'
+                  }}
+                >
+                  <Ionicons
+                    style={{ paddingBottom: 40 }}
+                    name="close-circle"
+                    size={32}
+                    color={'red'}
+                  />
+                  <Text style={{ fontSize: 13, bottom: 30 }}>Cancel</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => getAndSetImage(SELECT_IMAGE)}>
+                <View
+                  style={{
+                    top: 40,
+                    width: 100,
+                    padding: 6,
+                    borderRadius: 6,
+                    backgroundColor: '#ffffff',
+                    elevation: 3,
+                    borderColor: '#000000',
+                    flexDirection: 'column',
+                    left: 20,
+                    alignContent: 'center',
+                    alignItems: 'center',
+                    height: '50%'
+                  }}
+                >
+                  <Ionicons
+                    style={{ paddingBottom: 40 }}
+                    name="image"
+                    size={32}
+                    color={'#000000'}
+                  />
+                  <Text style={{ fontSize: 13, bottom: 30 }}>
+                    Select a Image
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => getAndSetImage(TAKE_PICTURE)}>
+                <View
+                  style={{
+                    top: 40,
+                    width: 100,
+                    padding: 6,
+                    borderRadius: 6,
+                    backgroundColor: '#ffffff',
+                    elevation: 3,
+                    borderColor: '#000000',
+                    flexDirection: 'column',
+                    left: 20,
+                    alignContent: 'center',
+                    alignItems: 'center',
+                    height: '50%'
+                  }}
+                >
+                  <Ionicons
+                    style={{ paddingBottom: 50 }}
+                    name="camera"
+                    size={32}
+                    color={'#000000'}
+                  />
+                  <Text style={{ fontSize: 13, bottom: 30 }}>
+                    Take a picture
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </BottomSheet>
         </Modal>
 
         <View>
@@ -752,7 +910,7 @@ const Home = ({ navigation, props }: any) => {
               borderRadius: 25,
               height: 40,
               paddingLeft: 10,
-              marginTop: 5
+              bottom: 20
             }}
             value={searchText}
             placeholder="Pesquisar"
@@ -774,7 +932,8 @@ const Home = ({ navigation, props }: any) => {
                 top: 250,
                 justifyContent: 'center',
                 alignContent: 'center',
-                alignItems: 'center'
+                alignItems: 'center',
+                backgroundColor: 'red'
               }}
             >
               <Text
@@ -798,7 +957,7 @@ export default Home
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffff',
+    backgroundColor: '#ffffff',
     padding: 10
   },
   viewBlocoMoment: {
@@ -811,11 +970,11 @@ const styles = StyleSheet.create({
     width: Dimensions.get('window').width - 70,
     backgroundColor: 'white',
     margin: 10,
-    marginBottom: 10,
     borderRadius: 20,
     height: 280,
     elevation: 3,
-    padding: 10
+    padding: 10,
+    bottom: 40
   },
   imageContainer: {
     margin: 15,
@@ -838,12 +997,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 15
   },
-  updatedAtText: {
+  dateText: {
     top: 5,
     fontWeight: 'bold',
-    marginLeft: 15
+    marginLeft: 5
   },
-  priceText: {
+  describeText: {
     color: '#6d20dab8',
     fontWeight: 'bold',
     marginLeft: 15,

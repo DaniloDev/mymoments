@@ -216,7 +216,7 @@ const Stories = (props: any) => {
       const response = realm
         .objects<StorysProps[]>(dbName)
         .filtered(`moment_id = '${moment_Id}'`)
-        .sorted('date')
+        .sorted('updatedAT', true)
         .toJSON()
       setStories(response)
       setAuxStories(response)
@@ -409,9 +409,6 @@ const Stories = (props: any) => {
   }
 
   const handleCanSave = async () => {
-    //  console.log(storyDescribe)
-    console.log('optionsFeel ', optionsFeel)
-    console.log('optionsReason ', optionsReason)
     if (
       storyDescribe.trim().toString().length >= 6 &&
       optionsFeel.toString().length > 0
@@ -434,6 +431,7 @@ const Stories = (props: any) => {
         await saveStory(data)
 
         setStoryDescribe('')
+        setDateMarked(null)
         setOptionsFeel([])
         setOptionsReason([])
         setPlaceName('')
@@ -620,12 +618,6 @@ const Stories = (props: any) => {
           <Text style={{ textAlign: 'center' }}>My Stories</Text>
         </View>
         <SafeAreaView style={styles.container}>
-          <BottomSheet
-            ref={bottomSheetRef}
-            activeHeight={height * 0.5}
-            backgroundColor={'white'}
-            backDropColor={'black'}
-          />
           {/*   INICIO MODAL        */}
           <Modal visible={visible} animationType="slide">
             <KeyboardAvoidingView
