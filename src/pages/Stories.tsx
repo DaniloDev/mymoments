@@ -66,7 +66,7 @@ const Stories = (props: any) => {
 
   const [openModal, setOpenModal] = useState(false)
 
-  const [dateMarked, setDateMarked] = useState('')
+  const [dateMarked, setDateMarked] = useState<any>(null)
 
   const [idEdit, setIdEdit] = useState(null)
 
@@ -418,7 +418,7 @@ const Stories = (props: any) => {
           reason: optionsReason[0],
           placeName: placeName,
           image: imageInBase64,
-          date: new Date(),
+          date: dateMarked == null ? new Date() : new Date(dateMarked),
           emojiCategory: emojiCategory
         }
 
@@ -636,6 +636,7 @@ const Stories = (props: any) => {
                         setSelectedImage(null)
                         setImageInBase64(null)
                         setIdEdit(null)
+                        props.route.params.storyEdit[0].id = null
                       }}
                     >
                       <Text
@@ -739,6 +740,24 @@ const Stories = (props: any) => {
 
                     <Calendar
                       onDayPress={(date) => setDateMarked(date.dateString)}
+                      markingType="multi-dot"
+                      markedDates={{
+                        [dateMarked]: {
+                          selected: true,
+                          selectedColor: '#8c04bd',
+                          selectedTextColor: 'white'
+                        }
+                      }}
+                      theme={{
+                        backgroundColor: '#ffffff',
+                        calendarBackground: '#ffffff',
+                        textSectionTitleColor: '#b6c1cd',
+                        selectedDayBackgroundColor: '#00adf5',
+                        selectedDayTextColor: '#ffffff',
+                        todayTextColor: '#00adf5',
+                        dayTextColor: '#2d4150',
+                        textDisabledColor: '#d9e'
+                      }}
                     />
 
                     <Text

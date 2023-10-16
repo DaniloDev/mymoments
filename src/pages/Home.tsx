@@ -23,6 +23,7 @@ import { Input } from 'react-native-elements'
 import RNFS from 'react-native-fs'
 import getRealm from '../services/realm'
 import { MomentsProps } from '../models/Moments.interface'
+import { StorysProps } from '../models/Stories.interface'
 import StatusWrapper from '../components/StatusWrapper'
 import dataMoment from '../dataMoment'
 import { useFocusEffect } from '@react-navigation/native'
@@ -63,6 +64,9 @@ const Home = ({ navigation, props }: any) => {
 
   const [momentName, setMomentName] = useState('')
   const [momentDescribe, setMomentDescribe] = useState('')
+
+  const [dateMarked, setDateMarked] = useState('')
+
   const [searchText, setSeaechText] = useState('')
 
   const showModal = () => setVisible(true)
@@ -518,10 +522,10 @@ const Home = ({ navigation, props }: any) => {
                   <TouchableOpacity
                     onPress={() => {
                       hideModal()
-                      setStoryDescribe('')
+                      // setStoryDescribe('')
                       //  setOptionsFeel([])
                       //setOptionsReason([])
-                      setPlaceName('')
+                      //   setPlaceName('')
                       setSelectedImage(null)
                       setImageInBase64(null)
                       setIdEdit(null)

@@ -148,24 +148,19 @@ const Main = () => {
 
                   <TouchableOpacity
                     onPress={() => {
-                      Alert.alert(
-                        'Delete',
-                        'Are you sure to delete that ? ' +
-                          route.params.story[0].id,
-                        [
-                          {
-                            text: 'Cancel',
-                            onPress: () => {}
-                          },
-                          {
-                            text: 'OK',
-                            onPress: () => {
-                              deleteStory(route.params.story[0].id)
-                              navigation.navigate('Stories')
-                            }
+                      Alert.alert('Delete', 'Are you sure to delete that ? ', [
+                        {
+                          text: 'Cancel',
+                          onPress: () => {}
+                        },
+                        {
+                          text: 'OK',
+                          onPress: () => {
+                            deleteStory(route.params.story[0].id)
+                            navigation.navigate('Stories')
                           }
-                        ]
-                      )
+                        }
+                      ])
                     }}
                   >
                     <Text style={{ right: 5, paddingLeft: 10 }}>
