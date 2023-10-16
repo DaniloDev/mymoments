@@ -18,6 +18,7 @@ const StorySchema: ObjectSchema = {
       optional: true
     },
     date: 'date',
+    updatedAT: 'date',
     emojiCategory: 'string'
   }
 }

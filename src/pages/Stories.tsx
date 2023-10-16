@@ -18,7 +18,7 @@ import {
   LogBox,
   useWindowDimensions
 } from 'react-native'
-import { formatDistance } from 'date-fns'
+import { format, formatDistance } from 'date-fns'
 import { MotiView } from 'moti'
 import { Input } from 'react-native-elements'
 import CheckBoxFeel from '../components/CheckBoxFeel'
@@ -234,9 +234,16 @@ const Stories = (props: any) => {
     // console.log('STORIES', stories)
 
     if (props.route.params.storyEdit[0].id !== null) {
+      console.log(
+        'DATE IN STORIES ',
+        props.route.params.storyEdit[0].date.toISOString().substr(0, 10)
+      )
       setIdEdit(props.route.params.storyEdit[0].id)
       setIdEdit(props.route.params.storyEdit[0].id)
       setStoryDescribe(props.route.params.storyEdit[0].describe)
+      setDateMarked(
+        props.route.params.storyEdit[0].date.toISOString().substr(0, 10)
+      )
       setOptionsFeel(props.route.params.storyEdit[0].feel)
       setOptionsReason(props.route.params.storyEdit[0].reason)
       setPlaceName(props.route.params.storyEdit[0].placeName)
@@ -315,6 +322,7 @@ const Stories = (props: any) => {
       placeName: data.placeName,
       image: data.image,
       date: data.date,
+      updatedAT: data.updatedAT,
       emojiCategory: data.emojiCategory
     }
     realm.write(() => {
@@ -419,6 +427,7 @@ const Stories = (props: any) => {
           placeName: placeName,
           image: imageInBase64,
           date: dateMarked == null ? new Date() : new Date(dateMarked),
+          updatedAT: new Date(),
           emojiCategory: emojiCategory
         }
 
@@ -462,7 +471,8 @@ const Stories = (props: any) => {
       reason: optionsReason[0],
       placeName: placeName,
       image: imageInBase64,
-      date: new Date(),
+      date: dateMarked == null ? new Date() : new Date(dateMarked),
+      updatedAT: new Date(),
       emojiCategory: emojiCategory
     }
 
@@ -527,15 +537,25 @@ const Stories = (props: any) => {
               color={'#154'}
             />
             <Text style={styles.date}>
-              {formatDistance(new Date(item.date), new Date(), {
+              {
+                format(item.date, 'EEEE, MMM dd, yyyy')
+                /*formatDistance(new Date(item.updatedAT), new Date(), {
                 locale: undefined,
                 addSuffix: false
-              })}
+              })*/
+
+                /* item.date
+                  .toISOString()
+                  .substr(0, 10)
+                  .split('-')
+                  .reverse()
+                  .join('-')*/
+              }
             </Text>
             <View
               style={{
                 flexDirection: 'row',
-                left: 130,
+                left: 60,
                 top: 7
               }}
             >
@@ -636,7 +656,9 @@ const Stories = (props: any) => {
                         setSelectedImage(null)
                         setImageInBase64(null)
                         setIdEdit(null)
-                        props.route.params.storyEdit[0].id = null
+                        setDateMarked(null)
+                        if (props.route.params.storyEdit !== null)
+                          props.route.params.storyEdit = null
                       }}
                     >
                       <Text
@@ -739,13 +761,19 @@ const Stories = (props: any) => {
                     </Text>
 
                     <Calendar
+                      initialDate={
+                        dateMarked == null
+                          ? new Date().toISOString().substr(0, 10)
+                          : new Date(dateMarked).toISOString().substr(0, 10)
+                      }
                       onDayPress={(date) => setDateMarked(date.dateString)}
                       markingType="multi-dot"
                       markedDates={{
                         [dateMarked]: {
                           selected: true,
                           selectedColor: '#8c04bd',
-                          selectedTextColor: 'white'
+                          selectedTextColor: 'white',
+                          marked: true
                         }
                       }}
                       theme={{

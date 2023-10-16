@@ -8,6 +8,7 @@ export interface StorysProps {
     placeName?: string
     image?: string
     date: Date
+    updatedAT: Date
     emojiCategory?: String
   }
   editar: any
