@@ -164,82 +164,134 @@ const Home = ({ navigation, props }: any) => {
 
   useFocusEffect(
     useCallback(() => {
-      const dbName = 'Moment'
-      const loadMoments = async () => {
-        const realm = await getRealm()
-        const data = realm.objects(dbName).sorted('updatedAT', true)
-        setMoments(data)
-        setAuxMoments(data)
-        console.log('MOMENTS ', moments)
-      }
-
       loadMoments()
     }, [props, isFocused])
   )
 
+  const loadMoments = async () => {
+    const dbName = 'Moment'
+    const realm = await getRealm()
+    const data = realm.objects(dbName).sorted('date', true)
+    setMoments(data)
+    setAuxMoments(data)
+    console.log('MOMENTS ', moments)
+  }
+
   const renderItem = ({ item, index }) => {
     return (
-      <TouchableOpacity
-        onPress={() => {
-          navigation.navigate('Stories', {
-            moment_id: item.id
-          })
-          setSeaechText('')
-        }}
-      >
+      <View style={{ flexDirection: 'row' }}>
         <MotiView
           style={styles.listContainer}
           from={{ opacity: 0, translateY: 50 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ delay: 1000 + index * 200 }}
         >
-          <View style={styles.imageContainer}>
-            {item.image ? (
-              <Image
-                source={{ uri: item.image }}
-                style={styles.image}
-                resizeMode="stretch"
-              />
-            ) : (
-              <ImageBackground
-                source={cardPurple}
-                style={styles.imageBackground}
-                resizeMode="stretch"
-              >
-                <Text style={{ color: '#ffffff' }}>{item.name}</Text>
-              </ImageBackground>
-            )}
-          </View>
-          <View style={{ alignContent: 'flex-start', bottom: 40 }}>
-            <Text style={styles.nameText}>{item.name}</Text>
-            <View style={{ flexDirection: 'row' }}>
-              <Ionicons
-                style={{ top: 6, paddingLeft: 16 }}
-                name="calendar-sharp"
-                size={18}
-                color={'#154'}
-              />
-              <Text style={styles.dateText}>
-                {
-                  format(item.date, 'EEEE, MMM dd, yyyy')
-                  /*formatDistance(new Date(item.updatedAT), new Date(), {
+          <TouchableOpacity
+            style={{ bottom: 16 }}
+            onPress={() => {
+              navigation.navigate('Stories', {
+                moment_id: item.id
+              })
+              setSeaechText('')
+            }}
+          >
+            <View style={styles.imageContainer}>
+              {item.image ? (
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles.image}
+                  resizeMode="stretch"
+                />
+              ) : (
+                <ImageBackground
+                  source={cardPurple}
+                  style={styles.imageBackground}
+                  resizeMode="stretch"
+                >
+                  <Text style={{ color: '#ffffff', bottom: 10 }}>
+                    {item.name}
+                  </Text>
+                </ImageBackground>
+              )}
+            </View>
+            <View
+              style={{
+                alignContent: 'flex-start',
+                bottom: item.image ? 40 : 70,
+                left: 10
+              }}
+            >
+              <Text style={styles.nameText}>{item.name}</Text>
+              <View style={{ flexDirection: 'row' }}>
+                <Ionicons
+                  style={{ top: 6, paddingLeft: 16 }}
+                  name="calendar-sharp"
+                  size={18}
+                  color={'#154'}
+                />
+                <Text style={styles.dateText}>
+                  {
+                    format(item.date, 'EEEE, MMM dd, yyyy')
+                    /*formatDistance(new Date(item.updatedAT), new Date(), {
                 locale: undefined,
                 addSuffix: false
               })*/
 
-                  /* item.date
+                    /* item.date
                   .toISOString()
                   .substr(0, 10)
                   .split('-')
                   .reverse()
                   .join('-')*/
-                }
-              </Text>
+                  }
+                </Text>
+              </View>
+              <Text style={styles.describeText}>{item.describe}</Text>
             </View>
-            <Text style={styles.describeText}>{item.describe}</Text>
-          </View>
+          </TouchableOpacity>
         </MotiView>
-      </TouchableOpacity>
+
+        <View style={{ flexDirection: 'column' }}>
+          <TouchableOpacity
+            onPress={() => {
+              setIdEdit(item.id)
+              setMomentName(item.name)
+              setDateMarked(item.date.toISOString().substr(0, 10))
+              setMomentDescribe(item.describe)
+              setSelectedImage(item.image)
+              setSelectedImageAux(item.image)
+              setImageInBase64(item.image)
+              showModal()
+            }}
+          >
+            <Text style={{ top: 30, left: 12 }}>
+              <Ionicons name="pencil" size={20} color={'#154'} />
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              Alert.alert('Delete', 'Are you sure to delete that ? ', [
+                {
+                  text: 'Cancel',
+                  onPress: () => {}
+                },
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    deleteMoment(item.id)
+                    loadMoments()
+                  }
+                }
+              ])
+            }}
+          >
+            <Text style={{ top: 44, left: 12 }}>
+              <Ionicons name="trash" size={20} color={'#154'} />
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     )
   }
 
@@ -467,7 +519,7 @@ const Home = ({ navigation, props }: any) => {
     }
   }
 
-  /*const updateMoment = async () => {
+  const updateMoment = async () => {
     if (idEdit === null) {
       Alert.alert('Você não pode editar!')
       return
@@ -477,28 +529,39 @@ const Home = ({ navigation, props }: any) => {
     const dbName = 'Moment'
     const response = {
       id: idEdit,
-      describe: storyDescribe,
-      feel: optionsFeel[0],
-      reason: optionsReason[0],
-      placeName: placeName,
+      name: momentName,
+      describe: momentDescribe,
       image: imageInBase64,
-      date: new Date(),
-      emojiCategory: emojiCategory
+      date: dateMarked == null ? new Date() : new Date(dateMarked),
+      updatedAT: new Date()
     }
 
     await realm.write(() => {
       realm.create(dbName, response, 'modified')
     })
 
-    setStoryDescribe('')
-    setOptionsFeel([])
-    setOptionsReason([])
-    setPlaceName('')
+    setIdEdit(null)
+    // setCanEdited(false)
+    setMomentName('')
+    setDateMarked(null)
+    setMomentDescribe('')
     setSelectedImage(null)
     setImageInBase64(null)
     hideModal()
+    loadMoments()
     Keyboard.dismiss()
-  }*/
+  }
+
+  const deleteMoment = async (id: string) => {
+    const dbName = 'Moment'
+    const realm = await getRealm()
+
+    realm.write(() => {
+      if (realm.objects(dbName).filtered(`id = '${id}'`).length > 0) {
+        realm.delete(realm.objects(dbName).filtered(`id = '${id}'`))
+      }
+    })
+  }
   return (
     <>
       <View style={{ backgroundColor: '#ffffff' }}>
@@ -514,8 +577,7 @@ const Home = ({ navigation, props }: any) => {
             textAlign: 'left',
             left: 30,
             fontWeight: 'bold',
-            fontSize: 32,
-            bottom: 20
+            fontSize: 32
           }}
         >
           Moments
@@ -551,14 +613,12 @@ const Home = ({ navigation, props }: any) => {
                   <TouchableOpacity
                     onPress={() => {
                       hideModal()
-                      // setStoryDescribe('')
-                      //  setOptionsFeel([])
-                      //setOptionsReason([])
-                      //   setPlaceName('')
+                      setMomentName('')
+                      setMomentDescribe('')
+                      setDateMarked(null)
                       setSelectedImage(null)
                       setImageInBase64(null)
                       setIdEdit(null)
-                      setDateMarked(null)
                     }}
                   >
                     <Text
@@ -572,7 +632,7 @@ const Home = ({ navigation, props }: any) => {
                   </TouchableOpacity>
                   {idEdit !== null ? (
                     <TouchableOpacity
-                      onPress={() => {}}
+                      onPress={() => updateMoment()}
                       // disabled={disabledButtonSave}
                     >
                       <Text
@@ -722,7 +782,7 @@ const Home = ({ navigation, props }: any) => {
                     onChangeText={(str) => setMomentDescribe(str)}
                     multiline={true}
                     cursorColor={'#000000'}
-                    maxLength={60}
+                    maxLength={40}
                   />
                   <Text
                     style={{
@@ -909,8 +969,7 @@ const Home = ({ navigation, props }: any) => {
               borderWidth: 1,
               borderRadius: 25,
               height: 40,
-              paddingLeft: 10,
-              bottom: 20
+              paddingLeft: 10
             }}
             value={searchText}
             placeholder="Pesquisar"
@@ -932,8 +991,7 @@ const Home = ({ navigation, props }: any) => {
                 top: 250,
                 justifyContent: 'center',
                 alignContent: 'center',
-                alignItems: 'center',
-                backgroundColor: 'red'
+                alignItems: 'center'
               }}
             >
               <Text
@@ -958,7 +1016,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
-    padding: 10
+    padding: 10,
+    paddingBottom: 50
   },
   viewBlocoMoment: {
     backgroundColor: 'red',
@@ -973,15 +1032,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     height: 280,
     elevation: 3,
-    padding: 10,
-    bottom: 40
+    padding: 10
   },
   imageContainer: {
     margin: 15,
     borderRadius: 10,
     overflow: 'hidden'
   },
-  image: { width: '100%', height: '80%', top: 10, borderRadius: 6 },
+  image: { width: '95%', height: '75%', top: 10, borderRadius: 6, left: 10 },
 
   imageBackground: {
     width: '100%',

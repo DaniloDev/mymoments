@@ -216,7 +216,7 @@ const Stories = (props: any) => {
       const response = realm
         .objects<StorysProps[]>(dbName)
         .filtered(`moment_id = '${moment_Id}'`)
-        .sorted('updatedAT', true)
+        .sorted('date', true)
         .toJSON()
       setStories(response)
       setAuxStories(response)
