@@ -8,8 +8,10 @@ export interface StorysProps {
     placeName?: string
     image?: string
     date: Date
+    createdAT?: Date
     updatedAT: Date
     emojiCategory?: String
+    deletedAT?: number
   }
   editar: any
   excluir: any

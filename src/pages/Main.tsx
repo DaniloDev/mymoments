@@ -81,8 +81,24 @@ const Main = () => {
     const realm = await getRealm()
 
     realm.write(() => {
-      if (realm.objects(dbName).filtered(`id = '${id}'`).length > 0) {
-        realm.delete(realm.objects(dbName).filtered(`id = '${id}'`))
+      let story = realm.objects(dbName).filtered(`id = '${id}'`)
+
+      if (story.length > 0) {
+        const response = {
+          id: id,
+          describe: story[0].describe,
+          feel: story[0].feel,
+          reason: story[0].reason,
+          placeName: story[0].placeName,
+          image: story[0].image,
+          date: story[0].date,
+          updatedAT: story[0].updatedAT,
+          emojiCategory: story[0].emojiCategory,
+          deletedAT: 1
+        }
+        //realm.delete(realm.objects(dbName).filtered(`id = '${id}'`))
+
+        realm.create(dbName, response, 'modified')
       }
     })
   }

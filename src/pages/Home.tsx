@@ -169,12 +169,27 @@ const Home = ({ navigation, props }: any) => {
   )
 
   const loadMoments = async () => {
-    const dbName = 'Moment'
-    const realm = await getRealm()
-    const data = realm.objects(dbName).sorted('date', true)
-    setMoments(data)
-    setAuxMoments(data)
-    console.log('MOMENTS ', moments)
+    try {
+      const dbName = 'Moment'
+      const realm = await getRealm()
+      const response = realm
+        .objects<MomentsProps[]>(dbName)
+        .filtered('deletedAT =' + 0)
+        .sorted('createdAT', true)
+        .toJSON()
+      setMoments(response)
+      setAuxMoments(response)
+      console.log('MOMENTS ', moments)
+
+      if (response.length === 0) {
+        console.log('Warning', 'There are no moments yet')
+      }
+    } catch (error) {
+      console.log(error)
+      // Alert.alert('Good Times', 'ERROR in Good Times')
+    } finally {
+      //realm.close()
+    }
   }
 
   const renderItem = ({ item, index }) => {
@@ -414,11 +429,15 @@ const Home = ({ navigation, props }: any) => {
       describe: data.describe,
       image: data.image,
       date: data.date,
-      updatedAT: data.updatedAT
+      createdAT: data.createdAT,
+      updatedAT: data.updatedAT,
+      deletedAT: data.deletedAT
     }
     realm.write(() => {
       realm.create(dbName, dadosMoment)
     })
+
+    loadMoments()
   }
 
   const selectImage = async () => {
@@ -495,7 +514,9 @@ const Home = ({ navigation, props }: any) => {
           describe: momentDescribe,
           image: imageInBase64,
           date: dateMarked == null ? new Date() : new Date(dateMarked),
-          updatedAT: new Date()
+          createdAT: new Date(),
+          updatedAT: new Date(),
+          deletedAT: 0
         }
 
         await saveMoment(data)
@@ -557,8 +578,20 @@ const Home = ({ navigation, props }: any) => {
     const realm = await getRealm()
 
     realm.write(() => {
-      if (realm.objects(dbName).filtered(`id = '${id}'`).length > 0) {
-        realm.delete(realm.objects(dbName).filtered(`id = '${id}'`))
+      let moment = realm.objects(dbName).filtered(`id = '${id}'`)
+      if (moment.length > 0) {
+        const response = {
+          id: id,
+          name: moment[0].name,
+          describe: moment[0].describe,
+          image: moment[0].image,
+          date: moment[0].date,
+          updatedAT: moment[0].updatedAT,
+          deletedAT: 1
+        }
+        //realm.delete(realm.objects(dbName).filtered(`id = '${id}'`))
+
+        realm.create(dbName, response, 'modified')
       }
     })
   }

@@ -18,8 +18,10 @@ const StorySchema: ObjectSchema = {
       optional: true
     },
     date: 'date',
+    createdAT: { type: 'date', optional: true },
     updatedAT: 'date',
-    emojiCategory: 'string'
+    emojiCategory: 'string',
+    deletedAT: { type: 'int', optional: true }
   }
 }
 

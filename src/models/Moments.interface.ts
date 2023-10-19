@@ -5,7 +5,9 @@ export interface MomentsProps {
     describe?: string
     image?: string
     date: Date
+    createdAT?: Date
     updatedAT: Date
+    deletedAT?: number
   }
   editar: any
   excluir: any

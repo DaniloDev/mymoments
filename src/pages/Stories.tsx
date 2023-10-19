@@ -215,8 +215,8 @@ const Stories = (props: any) => {
       const realm = await getRealm()
       const response = realm
         .objects<StorysProps[]>(dbName)
-        .filtered(`moment_id = '${moment_Id}'`)
-        .sorted('date', true)
+        .filtered('deletedAT =' + 0)
+        .sorted('createdAT', true)
         .toJSON()
       setStories(response)
       setAuxStories(response)
@@ -322,8 +322,10 @@ const Stories = (props: any) => {
       placeName: data.placeName,
       image: data.image,
       date: data.date,
+      createdAT: data.createdAT,
       updatedAT: data.updatedAT,
-      emojiCategory: data.emojiCategory
+      emojiCategory: data.emojiCategory,
+      deletedAT: data.deletedAT
     }
     realm.write(() => {
       realm.create(dbName, dadosStory)
@@ -424,8 +426,10 @@ const Stories = (props: any) => {
           placeName: placeName,
           image: imageInBase64,
           date: dateMarked == null ? new Date() : new Date(dateMarked),
+          createdAT: new Date(),
           updatedAT: new Date(),
-          emojiCategory: emojiCategory
+          emojiCategory: emojiCategory,
+          deletedAT: 0
         }
 
         await saveStory(data)

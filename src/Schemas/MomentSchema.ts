@@ -15,7 +15,9 @@ const MomentSchema: ObjectSchema = {
       optional: true
     },
     date: 'date',
-    updatedAT: 'date'
+    createdAT: { type: 'date', optional: true },
+    updatedAT: 'date',
+    deletedAT: { type: 'int', optional: true }
     // story: 'Story[]'
   }
 }
