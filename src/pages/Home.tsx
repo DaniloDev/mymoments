@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import {
   View,
   Text,
@@ -39,10 +39,13 @@ import { getID } from '../utils/functions'
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker'
 import BottomSheet from '../components/BottomSheet'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-Ionicons.loadFont
+
+import { User, onAuthStateChanged } from 'firebase/auth'
+import { auth } from '../services/firebase'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
-
+import PopupMenu from '../components/PopupMenu'
+Ionicons.loadFont
 const Home = ({ navigation, props }: any) => {
   const SELECT_IMAGE = 'SELECT_IMAGE'
   const TAKE_PICTURE = 'TAKE_PICTURE'
@@ -70,6 +73,7 @@ const Home = ({ navigation, props }: any) => {
   const [momentDescribe, setMomentDescribe] = useState('')
 
   const [searchText, setSeaechText] = useState('')
+  const [user, setUser] = useState<User | null>(null)
 
   const showModal = () => setVisible(true)
   const hideModal = () => setVisible(false)
@@ -162,6 +166,14 @@ const Home = ({ navigation, props }: any) => {
     }
   }
 
+  useEffect(() => {
+    onAuthStateChanged(auth, (user) => {
+      console.log('user ', user)
+      setUser(user)
+      loadMoments()
+    })
+  }, [user?.uid])
+
   useFocusEffect(
     useCallback(() => {
       loadMoments()
@@ -175,6 +187,7 @@ const Home = ({ navigation, props }: any) => {
       const response = realm
         .objects<MomentsProps[]>(dbName)
         .filtered('deletedAT =' + 0)
+        .filtered(`userId = '${user?.uid}'`)
         .sorted('createdAT', true)
         .toJSON()
       setMoments(response)
@@ -425,6 +438,7 @@ const Home = ({ navigation, props }: any) => {
 
     const dadosMoment = {
       id: id,
+      userId: data.userId,
       name: data.name,
       describe: data.describe,
       image: data.image,
@@ -510,6 +524,7 @@ const Home = ({ navigation, props }: any) => {
     if (momentName.trim().toString().length >= 6) {
       try {
         const data = {
+          userId: user?.uid,
           name: momentName,
           describe: momentDescribe,
           image: imageInBase64,
@@ -595,14 +610,30 @@ const Home = ({ navigation, props }: any) => {
       }
     })
   }
+
+  const toDoBackup = () => {
+    const uid = user?.uid
+    const momentsArray = moments
+
+    fetch()
+  }
+
   return (
     <>
-      <View style={{ backgroundColor: '#ffffff' }}>
+      <View
+        style={{
+          backgroundColor: '#ffffff',
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end'
+        }}
+      >
         <TouchableOpacity onPress={showModal}>
-          <Text style={{ textAlign: 'right', right: 28 }}>
+          <Text style={{}}>
             <Ionicons name="add-circle" size={25} color={'#000000'} />
           </Text>
         </TouchableOpacity>
+        <PopupMenu />
       </View>
       <View style={{ backgroundColor: '#ffffff' }}>
         <Text

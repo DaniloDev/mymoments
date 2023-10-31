@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "299954349494",
+    "project_id": "mymoments-d9088",
+    "storage_bucket": "mymoments-d9088.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:299954349494:android:9fb11c72432ec2634d0d17",
+        "android_client_info": {
+          "package_name": "com.developtecnologia.mymoments"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "299954349494-ormmk2q36vecelmhsf075klf100kqhut.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.developtecnologia.mymoments",
+            "certificate_hash": "b0f5206102f2feb1df84293214cdb185a864267f"
+          }
+        },
+        {
+          "client_id": "299954349494-rvvmd76ajm2odr7bnrlbtot2l40sujpl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.developtecnologia.mymoments",
+            "certificate_hash": "3aa878922e69dd8e5a7e6688a7537a835c3f61dc"
+          }
+        },
+        {
+          "client_id": "299954349494-3a1c6l44uj0oeqfka4acdvvtha0g10ep.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQaHOF_wjaxnd2AAFczNB_rdVnQv7beWU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "299954349494-3a1c6l44uj0oeqfka4acdvvtha0g10ep.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

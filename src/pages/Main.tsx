@@ -22,6 +22,11 @@ import Configs from './Configs'
 import Stories from './Stories'
 import StoryView from './StoryView'
 import getRealm from '../services/realm'
+import Login from './Login'
+
+import { User, onAuthStateChanged } from 'firebase/auth'
+import { auth } from '../services/firebase'
+import signUp from './Signup'
 
 export type BottomTabParamList = {
   Home: undefined
@@ -76,6 +81,15 @@ const Tabs = () => {
 }
 
 const Main = () => {
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    onAuthStateChanged(auth, (user) => {
+      console.log('user ', user)
+      setUser(user)
+    })
+  }, [])
+
   const deleteStory = async (id: string) => {
     const dbName = 'Story'
     const realm = await getRealm()
@@ -102,6 +116,11 @@ const Main = () => {
       }
     })
   }
+
+  const messageLinkSend = () => {
+    Alert.alert('Verifique o link de email enviado para o email cadastrado')
+  }
+
   return (
     <>
       <StatusBar barStyle={'dark-content'} backgroundColor={'#ffffff'} />
@@ -112,13 +131,19 @@ const Main = () => {
         >
           <Stack.Screen
             name="Home"
-            component={Home}
+            component={user && user.emailVerified ? Home : Login}
             options={{ headerShown: false }}
           />
 
           <Stack.Screen
             name="Stories"
             component={Stories}
+            options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="SignUP"
+            component={signUp}
             options={{ headerShown: false }}
           />
 

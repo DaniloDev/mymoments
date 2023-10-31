@@ -13,11 +13,16 @@
     "release-bundle": "npm run bundle && cd android && ./gradlew bundleRelease"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.19.3",
     "@react-native-community/masked-view": "^0.1.11",
+    "@react-native-firebase/app": "^18.5.0",
+    "@react-native-firebase/auth": "^18.5.0",
+    "@react-native-google-signin/google-signin": "^10.1.0",
     "@react-navigation/bottom-tabs": "^6.5.8",
     "@react-navigation/native": "^6.1.7",
     "@react-navigation/stack": "^6.3.17",
     "date-fns": "^2.30.0",
+    "firebase": "10.3.0",
     "js-base64": "^3.7.5",
     "moti": "^0.26.0",
     "react": "18.2.0",

@@ -5,6 +5,7 @@ const MomentSchema: ObjectSchema = {
   primaryKey: 'id',
   properties: {
     id: { type: 'string', indexed: true },
+    userId: 'string',
     name: 'string',
     describe: {
       type: 'string',

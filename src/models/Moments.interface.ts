@@ -5,6 +5,7 @@ export interface MomentsProps {
     describe?: string
     image?: string
     date: Date
+    userId: string
     createdAT?: Date
     updatedAT: Date
     deletedAT?: number
