@@ -15,11 +15,9 @@ import {
   SignInMethod,
   User
 } from 'firebase/auth'
-import { auth, app } from '../services/firebase'
-//import signInWithPopup from '@react-native-firebase/auth'
-//import firebase from 'firebase/app'
+import { authFirebase } from '../services/firebase'
 
-//import auth from '@react-native-firebase/auth'c
+import auth from '@react-native-firebase/auth'
 
 const Login = (props) => {
   const [email, setEmail] = useState('')
@@ -27,17 +25,13 @@ const Login = (props) => {
 
   useEffect(() => {
     GoogleSignin.configure({
-      scopes: ['https://www.googleapis.com/auth/drive.readonly'],
       webClientId:
-        '299954349494-3a1c6l44uj0oeqfka4acdvvtha0g10ep.apps.googleusercontent.com',
-      forceCodeForRefreshToken: true
-
-      //android/app/google-services.json - 299954349494-4n7ukadlrfq8png48jdhguc6v771khiq.apps.googleusercontent.com
+        '299954349494-4jgjnj04qmn4h43n7pf36ak6187vhii5.apps.googleusercontent.com'
     })
   }, [])
 
   const loginWithEmailAndPassword = () => {
-    signInWithEmailAndPassword(auth, email, password)
+    signInWithEmailAndPassword(authFirebase, email, password)
       .then((result: User) => {
         console.log('RESULT ', result)
 
@@ -61,7 +55,7 @@ const Login = (props) => {
         Alert.alert(error.message)
       })*/
 
-    createUserWithEmailAndPassword(auth, email, password)
+    createUserWithEmailAndPassword(authFirebase, email, password)
       .then(() => {
         console.log('User account created & signed in!')
       })
@@ -78,14 +72,17 @@ const Login = (props) => {
       })
   }
 
-  const signIn = async () => {
+  const signInWithGoogle = async () => {
     try {
-      await GoogleSignin.hasPlayServices()
-      const { idToken } = await GoogleSignin.signIn()
-      const googleCredentials = GoogleAuthProvider.credential(idToken)
-      await signInWithCredential(auth, googleCredentials)
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true })
+      const { idToken, user } = await GoogleSignin.signIn()
+      console.log('IDTOKEN ', idToken)
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken)
+
+      console.log('USER LOGIN ', user)
+      return auth().signInWithCredential(googleCredential)
     } catch (error: any) {
-      console.log('got error ', error.message)
+      console.log(error.message)
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         // user cancelled the login flow
       } else if (error.code === statusCodes.IN_PROGRESS) {
@@ -98,24 +95,6 @@ const Login = (props) => {
     }
   }
 
-  const signInWithGoogle = async () => {
-    const googleAuthProvider = new GoogleAuthProvider()
-
-    // signInWithPopup()
-  }
-  /*
-  async function onGoogleButtonPress() {
-    // Check if your device supports Google Play
-    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true })
-    // Get the users ID token
-    const { idToken } = await GoogleSignin.signIn()
-
-    // Create a Google credential with the token
-    const googleCredential = auth.GoogleAuthProvider.credential(idToken)
-
-    // Sign-in the user with the credential
-    return auth().signInWithCredential(googleCredential)
-  }*/
   return (
     <>
       <View

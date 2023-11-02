@@ -17,11 +17,11 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
-let auth = initializeAuth(app, {
+let authFirebase = initializeAuth(app, {
   persistence: getReactNativePersistence(ReactNativeAsyncStorage)
 })
 
-auth = getAuth(app)
-export { auth, app }
+authFirebase = getAuth(app)
+export { authFirebase, app }
 
 // Android 299954349494-ormmk2q36vecelmhsf075klf100kqhut.apps.googleusercontent.com

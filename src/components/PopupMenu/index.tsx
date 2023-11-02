@@ -9,15 +9,20 @@ import {
   Easing,
   View,
   Linking,
-  Platform
+  Platform,
+  Alert
 } from 'react-native'
 //import Icon from 'react-native-vector-icons/dist/MaterialCommunityIcons'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
 //import RewardedAdModal from '../RewardedAdModal'
 //import { purchasedCheck } from '../../services/purchase'
-import { auth } from '../../services/firebase'
+import { authFirebase } from '../../services/firebase'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import { User, onAuthStateChanged } from 'firebase/auth'
+import { MomentsProps } from '../../models/Moments.interface'
+import getRealm from '../../services/realm'
+import { StorysProps } from '../../models/Stories.interface'
 Ionicons.loadFont
 //import Share from 'react-native-share'
 //import useValidatePurchase from '../../hooks/useValidatePurchase'
@@ -36,6 +41,11 @@ const PopupMenu = (props) => {
   const [adModalVisible, setAdModalVisible] = useState(false)
   const [comprou, setComprou] = useState(false)
   const scale = useRef(new Animated.Value(0)).current
+
+  const [user, setUser] = useState<User | null>(null)
+  const [moments, setMoments] = useState<MomentsProps[]>([])
+  const [stories, setStories] = useState<StorysProps[]>([])
+
   //const { purchased, setPurchased, requestSubscritionHook } = useValidatePurchase()
   //const { products, setProducts } = useValidatePurchase()
   //ca-app-pub-3940256099942544/5224354917
@@ -52,6 +62,15 @@ const PopupMenu = (props) => {
   }
 
   useEffect(() => {
+    onAuthStateChanged(authFirebase, async (user) => {
+      console.log('user ', user)
+      setUser(user)
+      await loadMoments()
+      await loadStories()
+    })
+  }, [user?.uid])
+
+  useEffect(() => {
     if (isFocused) {
       checkPerchased()
     }
@@ -59,6 +78,154 @@ const PopupMenu = (props) => {
 
   const checkPerchased = async () => {
     //setComprou(purchased)
+  }
+
+  const loadMoments = async () => {
+    try {
+      const dbName = 'Moment'
+      const realm = await getRealm()
+      const response = realm
+        .objects<MomentsProps[]>(dbName)
+        .filtered(`userId = '${user?.uid}'`)
+        .sorted('createdAT', true)
+        .toJSON()
+      setMoments(response)
+
+      // console.log('loadMoments in popup ', moments)
+
+      if (response.length === 0) {
+        console.log('Warning', 'There are no moments yet')
+      }
+    } catch (error) {
+      console.log(error)
+      // Alert.alert('Good Times', 'ERROR in Good Times')
+    } finally {
+      //realm.close()
+    }
+  }
+
+  const loadStories = async () => {
+    try {
+      const dbName = 'Story'
+      const realm = await getRealm()
+      const response = realm
+        .objects<StorysProps[]>(dbName)
+        .filtered(`userId = '${user?.uid}'`)
+        .sorted('createdAT', true)
+        .toJSON()
+      setStories(response)
+
+      //console.log('loadStories in popup ', stories)
+
+      if (response.length === 0) {
+        console.log('Warning', 'There are no stories yet')
+      }
+    } catch (error) {
+      console.log(error)
+      // Alert.alert('Good Times', 'ERROR in Good Times')
+    } finally {
+      //realm.close()
+    }
+  }
+
+  const backupData = async () => {
+    Alert.alert(
+      'Atenção',
+      'Tem certeza que deseja realizar o backup ? ' +
+        '\n' +
+        ' Essa operação apagará seu backup anterior, se você ja tinha feito um backup anterior, faça o logout, realize o login e faça recovery dos seus dados, antes de realizar um novo backup!',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => {}
+        },
+        {
+          text: 'OK',
+          onPress: () => {
+            // Nesse trecho tem que verificar se a internet
+            setTimeout(async () => {
+              await backupMoments()
+              await backupStories()
+            }, 300)
+          }
+        }
+      ]
+    )
+  }
+
+  const backupMoments = async () => {
+    await loadMoments()
+    console.log('moments in backupMoments ', moments)
+
+    if (moments.toString().length > 0) {
+      try {
+        const data = await fetch(
+          'https://europe-west2-mymoments-d9088.cloudfunctions.net/backupMoments',
+          {
+            headers: { 'Content-Type': 'application/json' },
+            method: 'POST',
+            body: JSON.stringify({ data: moments })
+          }
+        ).then((res) => {
+          res.json().then((r) => {
+            console.log('R SUPPORT backupMoments', r)
+            if (r.result.success == false) {
+              console.log('DEU PAU MOPAI backupMoments')
+            } else if (r.result.success == true) {
+              setTimeout(() => {
+                console.log('AI MOPAI backupMoments')
+              }, 100)
+
+              //navigation.goBack(null)
+            } else {
+              console.log('DEU PAU MOPAI ELSE backupMoments')
+            }
+          })
+        })
+      } catch (error) {
+        console.log('DEU PAU MOPAI CATCH backupMoments')
+      }
+    } else {
+      Alert.alert('CAIU NO ELSE DO BACKUP MOMENTS')
+    }
+  }
+
+  const backupStories = async () => {
+    await loadStories()
+
+    console.log('stories in backupStories ', stories)
+
+    if (stories.toString().length > 0) {
+      try {
+        const data = await fetch(
+          'https://europe-west2-mymoments-d9088.cloudfunctions.net/backupStories',
+          {
+            headers: { 'Content-Type': 'application/json' },
+            method: 'POST',
+            body: JSON.stringify({ data: stories })
+          }
+        ).then((res) => {
+          res.json().then((r) => {
+            console.log('R SUPPORT backupStories', r)
+            if (r.result.success == false) {
+              console.log('DEU PAU MOPAI backupStories')
+            } else if (r.result.success == true) {
+              setTimeout(() => {
+                console.log('AI MOPAI backupStories')
+              }, 100)
+
+              //navigation.goBack(null)
+            } else {
+              console.log('DEU PAU MOPAI ELSE backupStories')
+            }
+          })
+        })
+      } catch (error) {
+        console.log('DEU PAU MOPAI CATCH backupStories')
+      }
+    } else {
+      Alert.alert('CAIU NO ELSE DO BACKUP STORIES')
+    }
   }
 
   const share = async () => {
@@ -80,13 +247,13 @@ const PopupMenu = (props) => {
     {
       title: 'Sair',
       icon: 'log-out',
-      action: () => auth.signOut()
+      action: () => authFirebase.signOut()
     },
 
     {
       title: 'Fazer Backup',
       icon: 'cloud-upload',
-      action: () => auth.signOut()
+      action: async () => await backupData()
     }
   ]
 

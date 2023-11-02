@@ -61,6 +61,7 @@ const Stories = (props: any) => {
 
   const [visibleStories, setVisibleStories] = useState(false)
   const [moment_Id, setMoment_Id] = useState('')
+  const [userId, setUserId] = useState('')
 
   const [changeStory, setChangeStory] = useState('')
 
@@ -205,6 +206,11 @@ const Stories = (props: any) => {
       if (props.route.params?.moment_id) {
         setMoment_Id(props.route.params.moment_id)
       }
+
+      if (props.route.params?.userId) {
+        setUserId(props.route.params.userId)
+      }
+
       loadStories()
     }, [props, isFocused, moment_Id])
   )
@@ -316,6 +322,7 @@ const Stories = (props: any) => {
 
     const dadosStory = {
       id: id,
+      userId: data.userId,
       moment_id: data.moment_id,
       describe: data.describe,
       feel: data.feel,
@@ -420,6 +427,7 @@ const Stories = (props: any) => {
         const emojiCategory = checkCategoryToTheMoment(optionsFeel[0])
 
         const data = {
+          userId: userId,
           moment_id: moment_Id,
           describe: storyDescribe,
           feel: optionsFeel[0],

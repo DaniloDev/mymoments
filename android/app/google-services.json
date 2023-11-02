@@ -14,15 +14,7 @@
       },
       "oauth_client": [
         {
-          "client_id": "299954349494-ormmk2q36vecelmhsf075klf100kqhut.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.developtecnologia.mymoments",
-            "certificate_hash": "b0f5206102f2feb1df84293214cdb185a864267f"
-          }
-        },
-        {
-          "client_id": "299954349494-rvvmd76ajm2odr7bnrlbtot2l40sujpl.apps.googleusercontent.com",
+          "client_id": "299954349494-82sfh7lf314883v3e6o1q6on7i9r1uol.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.developtecnologia.mymoments",
@@ -30,7 +22,15 @@
           }
         },
         {
-          "client_id": "299954349494-3a1c6l44uj0oeqfka4acdvvtha0g10ep.apps.googleusercontent.com",
+          "client_id": "299954349494-gmo13cnjkrfls25vhv7k6ns17f4qnmdj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.developtecnologia.mymoments",
+            "certificate_hash": "b0f5206102f2feb1df84293214cdb185a864267f"
+          }
+        },
+        {
+          "client_id": "299954349494-4jgjnj04qmn4h43n7pf36ak6187vhii5.apps.googleusercontent.com",
           "client_type": 3
         }
       ],

@@ -25,8 +25,8 @@ import getRealm from '../services/realm'
 import Login from './Login'
 
 import { User, onAuthStateChanged } from 'firebase/auth'
-import { auth } from '../services/firebase'
-import signUp from './Signup'
+import { authFirebase } from '../services/firebase'
+import Signup from './Signup'
 
 export type BottomTabParamList = {
   Home: undefined
@@ -84,7 +84,7 @@ const Main = () => {
   const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(authFirebase, (user) => {
       console.log('user ', user)
       setUser(user)
     })
@@ -142,8 +142,14 @@ const Main = () => {
           />
 
           <Stack.Screen
+            name="Login"
+            component={Login}
+            options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
             name="SignUP"
-            component={signUp}
+            component={Signup}
             options={{ headerShown: false }}
           />
 

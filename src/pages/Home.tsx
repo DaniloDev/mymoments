@@ -41,7 +41,7 @@ import BottomSheet from '../components/BottomSheet'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 import { User, onAuthStateChanged } from 'firebase/auth'
-import { auth } from '../services/firebase'
+import { authFirebase } from '../services/firebase'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import PopupMenu from '../components/PopupMenu'
@@ -167,7 +167,7 @@ const Home = ({ navigation, props }: any) => {
   }
 
   useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(authFirebase, (user) => {
       console.log('user ', user)
       setUser(user)
       loadMoments()
@@ -192,7 +192,8 @@ const Home = ({ navigation, props }: any) => {
         .toJSON()
       setMoments(response)
       setAuxMoments(response)
-      console.log('MOMENTS ', moments)
+
+      console.log('MOMENTS ', JSON.stringify(moments))
 
       if (response.length === 0) {
         console.log('Warning', 'There are no moments yet')
@@ -218,7 +219,8 @@ const Home = ({ navigation, props }: any) => {
             style={{ bottom: 16 }}
             onPress={() => {
               navigation.navigate('Stories', {
-                moment_id: item.id
+                moment_id: item.id,
+                userId: item.userId
               })
               setSeaechText('')
             }}
@@ -610,14 +612,6 @@ const Home = ({ navigation, props }: any) => {
       }
     })
   }
-
-  const toDoBackup = () => {
-    const uid = user?.uid
-    const momentsArray = moments
-
-    fetch()
-  }
-
   return (
     <>
       <View

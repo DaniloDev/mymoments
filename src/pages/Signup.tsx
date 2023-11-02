@@ -5,24 +5,33 @@ import {
   createUserWithEmailAndPassword,
   sendEmailVerification
 } from 'firebase/auth'
-import { auth } from '../services/firebase'
+import { authFirebase } from '../services/firebase'
 
-const SignUp = () => {
+const SignUp = (props: any) => {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
   const signUpWithEmailAndPassword = () => {
-    createUserWithEmailAndPassword(auth, email, password)
+    createUserWithEmailAndPassword(authFirebase, email, password)
       .then(() => {
-        const currentUser = auth.currentUser
+        const user: any = authFirebase.currentUser
 
-        sendEmailVerification(currentUser)
+        const currentUser = {
+          name: name,
+          email: email,
+          uid: user?.uid
+        }
+
+        sendEmailVerification(user)
           .then(() => {
+            createNewUser(currentUser)
             Alert.alert(
               'Verificação de Email',
               'Foi enviado um email link no email cadastrado para verificação'
             )
+
+            props.navigation.navigate('Login')
           })
           .catch((error: any) => {
             console.log(error.message)
@@ -44,11 +53,11 @@ const SignUp = () => {
       })
   }
 
-  const createNewUser = async (currentUser) => {
+  const createNewUser = async (currentUser: any) => {
     console.log('currentUser ', currentUser)
     try {
       const createNewUser = await fetch(
-        'https://europe-west2-mymoments.cloudfunctions.net/createNewUser',
+        'https://europe-west2-mymoments-d9088.cloudfunctions.net/createNewUser',
         {
           headers: { 'Content-Type': 'application/json' },
           method: 'POST',
@@ -56,21 +65,23 @@ const SignUp = () => {
         }
       ).then((res) => {
         res.json().then((r) => {
-          if (r.result.error == -1) {
-            Alert.alert('Deu erro')
-          } else if (r.result.isActiveSubscription) {
-            setPurchased(true)
+          console.log('R SUPPORT ', r)
+          if (r.result.success == false) {
+            console.log('DEU PAU MOPAI')
+          } else if (r.result.success == true) {
+            setTimeout(() => {
+              console.log('AI MOPAI')
+            }, 100)
+
+            //navigation.goBack(null)
           } else {
-            if (messageExperired) {
-              Alert.alert(
-                translate('useValidatePurchase.validate.alerts.expired.title'),
-                translate('useValidatePurchase.validate.alerts.expired.message')
-              )
-            }
+            console.log('DEU PAU MOPAI ELSE')
           }
         })
       })
-    } catch (error) {}
+    } catch (error) {
+      console.log('DEU PAU MOPAI CATCH')
+    }
   }
 
   return (
