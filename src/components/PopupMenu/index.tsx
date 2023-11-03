@@ -273,6 +273,8 @@ const PopupMenu = (props) => {
   }
 
   const resizeBox = (to: Number) => {
+    loadMoments()
+    loadStories()
     to === 1 && setVisible(true)
     Animated.timing(scale, {
       toValue: to,
