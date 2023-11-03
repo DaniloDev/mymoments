@@ -23,13 +23,17 @@ import { User, onAuthStateChanged } from 'firebase/auth'
 import { MomentsProps } from '../../models/Moments.interface'
 import getRealm from '../../services/realm'
 import { StorysProps } from '../../models/Stories.interface'
+
+import { useNetInfo } from '@react-native-community/netinfo'
 Ionicons.loadFont
+
 //import Share from 'react-native-share'
 //import useValidatePurchase from '../../hooks/useValidatePurchase'
 //import * as IAP from 'react-native-iap'
 //import {useTranslation} from 'react-i18next'
 
 const PopupMenu = (props) => {
+  const netInfo = useNetInfo()
   //const { t: translate, i18n } = useTranslation()
   const myProduct = 'rniapt_699_1m'
   const adID = 'ca-app-pub-6891561300564361/5342473394'
@@ -129,28 +133,35 @@ const PopupMenu = (props) => {
   }
 
   const backupData = async () => {
-    Alert.alert(
-      'Atenção',
-      'Tem certeza que deseja realizar o backup ? ' +
-        '\n' +
-        ' Essa operação apagará seu backup anterior, se você ja tinha feito um backup anterior, faça o logout, realize o login e faça recovery dos seus dados, antes de realizar um novo backup!',
-      [
-        {
-          text: 'Cancel',
-          onPress: () => {}
-        },
-        {
-          text: 'OK',
-          onPress: () => {
-            // Nesse trecho tem que verificar se a internet
-            setTimeout(async () => {
-              await backupMoments()
-              await backupStories()
-            }, 300)
+    if (netInfo.isConnected) {
+      Alert.alert(
+        'Atenção',
+        'Tem certeza que deseja realizar o backup ? ' +
+          '\n' +
+          ' Essa operação apagará seu backup anterior, se você ja tinha feito um backup anterior, faça o logout, realize o login e faça recovery dos seus dados, antes de realizar um novo backup!',
+        [
+          {
+            text: 'Cancel',
+            onPress: () => {}
+          },
+          {
+            text: 'OK',
+            onPress: () => {
+              // Nesse trecho tem que verificar se a internet
+              setTimeout(async () => {
+                await backupMoments()
+                await backupStories()
+              }, 300)
+            }
           }
-        }
-      ]
-    )
+        ]
+      )
+    } else {
+      Alert.alert(
+        'SEM CONEXÃO',
+        'Seu dispositivo não está conectado a internet, logo não sera possivel fazer backup'
+      )
+    }
   }
 
   const backupMoments = async () => {
