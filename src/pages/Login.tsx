@@ -22,20 +22,103 @@ import auth from '@react-native-firebase/auth'
 const Login = (props) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [user, setUser] = useState()
 
   useEffect(() => {
+    onAuthStateChanged(authFirebase, async (userHere) => {
+      setUser(userHere)
+
+      console.log('user IN LOGIN AT onAuthStateChanged', user)
+    })
     GoogleSignin.configure({
       webClientId:
         '299954349494-4jgjnj04qmn4h43n7pf36ak6187vhii5.apps.googleusercontent.com'
     })
   }, [])
 
-  const loginWithEmailAndPassword = () => {
-    signInWithEmailAndPassword(authFirebase, email, password)
-      .then((result: User) => {
-        console.log('RESULT ', result)
+  const RecoveryData = async (userId: any) => {
+    setTimeout(async () => {
+      await RecoveryMoments(userId)
+      await RecoveryStories(userId)
+    }, 300)
+  }
 
-        if (result.emailVerified) {
+  const RecoveryMoments = async (userId: any) => {
+    try {
+      const userInfo = {
+        userId: userId
+      }
+
+      console.log('USERINFO IN RECOVERYDATA ', userInfo)
+      const data = await fetch(
+        'https://europe-west2-mymoments-d9088.cloudfunctions.net/RecoveryMoments',
+        {
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          body: JSON.stringify({ data: userInfo })
+        }
+      ).then((res) => {
+        res.json().then((r) => {
+          console.log('R SUPPORT RecoveryMoments', r)
+          if (r.result.success == false) {
+            console.log('DEU PAU MOPAI RecoveryMoments')
+          } else if (r.result.success == true) {
+            setTimeout(() => {
+              console.log('AI MOPAI RecoveryMoments', r.result.data)
+            }, 100)
+
+            //navigation.goBack(null)
+          } else {
+            console.log('DEU PAU MOPAI ELSE RecoveryMoments')
+          }
+        })
+      })
+    } catch (error) {
+      console.log('DEU PAU MOPAI CATCH RecoveryMoments')
+    }
+  }
+
+  const RecoveryStories = async (userId: any) => {
+    try {
+      const userInfo = {
+        userId: userId
+      }
+      const data = await fetch(
+        'https://europe-west2-mymoments-d9088.cloudfunctions.net/RecoveryStories',
+        {
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          body: JSON.stringify({ data: userInfo })
+        }
+      ).then((res) => {
+        res.json().then((r) => {
+          console.log('R SUPPORT RecoveryStories', r)
+          if (r.result.success == false) {
+            console.log('DEU PAU MOPAI RecoveryStories')
+          } else if (r.result.success == true) {
+            setTimeout(() => {
+              console.log('AI MOPAI RecoveryStories', r.result.data)
+            }, 100)
+
+            //navigation.goBack(null)
+          } else {
+            console.log('DEU PAU MOPAI ELSE RecoveryStories')
+          }
+        })
+      })
+    } catch (error) {
+      console.log('DEU PAU MOPAI CATCH RecoveryStories')
+    }
+  }
+
+  const loginWithEmailAndPassword = async () => {
+    signInWithEmailAndPassword(authFirebase, email, password)
+      .then(() => {
+        const usuarioAtual = authFirebase.currentUser
+
+        RecoveryData(usuarioAtual?.uid)
+
+        if (usuarioAtual?.emailVerified) {
           props.navigation.navigate('Home')
         } else {
           Alert.alert('Error', 'Email não verificado')
