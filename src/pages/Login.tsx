@@ -18,11 +18,16 @@ import {
 import { authFirebase } from '../services/firebase'
 
 import auth from '@react-native-firebase/auth'
+import getRealm from '../services/realm'
+import { StorysProps } from '../models/Stories.interface'
+import { MomentsProps } from '../models/Moments.interface'
 
 const Login = (props) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [user, setUser] = useState()
+  const [moments, setMoments] = useState<MomentsProps[]>([])
+  const [stories, setStories] = useState<StorysProps[]>([])
 
   useEffect(() => {
     onAuthStateChanged(authFirebase, async (userHere) => {
@@ -36,7 +41,59 @@ const Login = (props) => {
     })
   }, [])
 
+  const loadMoments = async (userId: any) => {
+    try {
+      const dbName = 'Moment'
+      const realm = await getRealm()
+      const response = realm
+        .objects<MomentsProps[]>(dbName)
+        .filtered(`userId = '${userId}'`)
+        .sorted('createdAT', true)
+        .toJSON()
+      setMoments(response)
+
+      // console.log('loadMoments in popup ', moments)
+
+      if (response.length === 0) {
+        console.log('Warning', 'There are no moments yet')
+      }
+    } catch (error) {
+      console.log(error)
+      // Alert.alert('Good Times', 'ERROR in Good Times')
+    } finally {
+      //realm.close()
+    }
+  }
+
+  const loadStories = async (userId: any) => {
+    try {
+      const dbName = 'Story'
+      const realm = await getRealm()
+      const response = realm
+        .objects<StorysProps[]>(dbName)
+        .filtered(`userId = '${userId}'`)
+        .sorted('createdAT', true)
+        .toJSON()
+      setStories(response)
+
+      //console.log('loadStories in popup ', stories)
+
+      if (response.length === 0) {
+        console.log('Warning', 'There are no stories yet')
+      }
+    } catch (error) {
+      console.log(error)
+      // Alert.alert('Good Times', 'ERROR in Good Times')
+    } finally {
+      //realm.close()
+    }
+  }
+
   const RecoveryData = async (userId: any) => {
+    setTimeout(async () => {
+      await loadMoments(userId)
+      await loadStories(userId)
+    }, 150)
     setTimeout(async () => {
       await RecoveryMoments(userId)
       await RecoveryStories(userId)
@@ -58,16 +115,44 @@ const Login = (props) => {
           body: JSON.stringify({ data: userInfo })
         }
       ).then((res) => {
-        res.json().then((r) => {
+        res.json().then(async (r) => {
           console.log('R SUPPORT RecoveryMoments', r)
           if (r.result.success == false) {
             console.log('DEU PAU MOPAI RecoveryMoments')
           } else if (r.result.success == true) {
-            setTimeout(() => {
-              console.log('AI MOPAI RecoveryMoments', r.result.data)
-            }, 100)
+            setTimeout(async () => {
+              console.log(
+                'AI MOPAI RecoveryMoments dataStoreMoments',
+                r.result.data
+              )
 
-            //navigation.goBack(null)
+              await deleteMoments()
+              let arrayMoments: any
+
+              arrayMoments = r.result.data
+              console.log('ARRAY MOMENTS  ', arrayMoments)
+              console.log('ARRAY MOMENTS  LENGTH', arrayMoments.length)
+
+              for (let i = 0; i < arrayMoments.length; i++) {
+                const realm = await getRealm()
+                const dbName = 'Moment'
+
+                const dadosMoment = {
+                  id: arrayMoments[i].id,
+                  userId: arrayMoments[i].userId,
+                  name: arrayMoments[i].name,
+                  describe: arrayMoments[i].describe,
+                  image: arrayMoments[i].image,
+                  date: new Date(arrayMoments[i].date),
+                  createdAT: new Date(arrayMoments[i].createdAT),
+                  updatedAT: new Date(arrayMoments[i].updatedAT),
+                  deletedAT: arrayMoments[i].deletedAT
+                }
+                realm.write(() => {
+                  realm.create(dbName, dadosMoment)
+                })
+              }
+            }, 100)
           } else {
             console.log('DEU PAU MOPAI ELSE RecoveryMoments')
           }
@@ -91,16 +176,46 @@ const Login = (props) => {
           body: JSON.stringify({ data: userInfo })
         }
       ).then((res) => {
-        res.json().then((r) => {
+        res.json().then(async (r) => {
           console.log('R SUPPORT RecoveryStories', r)
           if (r.result.success == false) {
             console.log('DEU PAU MOPAI RecoveryStories')
           } else if (r.result.success == true) {
-            setTimeout(() => {
+            setTimeout(async () => {
               console.log('AI MOPAI RecoveryStories', r.result.data)
-            }, 100)
 
-            //navigation.goBack(null)
+              await deleteStories()
+
+              let arrayStories: any
+
+              arrayStories = r.result.data
+              console.log('ARRAY STORIES  0', arrayStories)
+              console.log('ARRAY STORIES  LENGTH', arrayStories.length)
+
+              for (let i = 0; i < arrayStories.length; i++) {
+                const realm = await getRealm()
+                const dbName = 'Story'
+
+                const dadosStory = {
+                  id: arrayStories[i].id,
+                  userId: arrayStories[i].userId,
+                  moment_id: arrayStories[i].moment_id,
+                  describe: arrayStories[i].describe,
+                  feel: arrayStories[i].feel,
+                  reason: arrayStories[i].reason,
+                  placeName: arrayStories[i].placeName,
+                  image: arrayStories[i].image,
+                  date: new Date(arrayStories[i].date),
+                  createdAT: new Date(arrayStories[i].createdAT),
+                  updatedAT: new Date(arrayStories[i].updatedAT),
+                  emojiCategory: arrayStories[i].emojiCategory,
+                  deletedAT: arrayStories[i].deletedAT
+                }
+                realm.write(() => {
+                  realm.create(dbName, dadosStory)
+                })
+              }
+            }, 100)
           } else {
             console.log('DEU PAU MOPAI ELSE RecoveryStories')
           }
@@ -111,12 +226,50 @@ const Login = (props) => {
     }
   }
 
+  const deleteMoments = async () => {
+    console.log('MOMENTS in deleteMoments ', moments)
+    const dbName = 'Moment'
+    const realm = await getRealm()
+
+    for (let i = 0; i < moments.length; i++) {
+      realm.write(() => {
+        if (
+          realm.objects(dbName).filtered(`userId = '${moments[i].userId}'`)
+            .length > 0
+        ) {
+          realm.delete(
+            realm.objects(dbName).filtered(`userId = '${moments[i].userId}'`)
+          )
+        }
+      })
+    }
+  }
+
+  const deleteStories = async () => {
+    console.log('STORIES in deleteStories ', stories)
+    const dbName = 'Story'
+    const realm = await getRealm()
+
+    for (let i = 0; i < stories.length; i++) {
+      realm.write(() => {
+        if (
+          realm.objects(dbName).filtered(`userId = '${stories[i].userId}'`)
+            .length > 0
+        ) {
+          realm.delete(
+            realm.objects(dbName).filtered(`userId = '${stories[i].userId}'`)
+          )
+        }
+      })
+    }
+  }
+
   const loginWithEmailAndPassword = async () => {
     signInWithEmailAndPassword(authFirebase, email, password)
-      .then(() => {
+      .then(async () => {
         const usuarioAtual = authFirebase.currentUser
 
-        RecoveryData(usuarioAtual?.uid)
+        await RecoveryData(usuarioAtual?.uid)
 
         if (usuarioAtual?.emailVerified) {
           props.navigation.navigate('Home')
