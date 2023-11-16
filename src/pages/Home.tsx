@@ -635,7 +635,8 @@ const Home = ({ navigation, props }: any) => {
             textAlign: 'left',
             left: 30,
             fontWeight: 'bold',
-            fontSize: 32
+            fontSize: 32,
+            color: '#757575'
           }}
         >
           Moments
@@ -695,7 +696,8 @@ const Home = ({ navigation, props }: any) => {
                     >
                       <Text
                         style={{
-                          fontSize: 18
+                          fontSize: 18,
+                          color: '#757575'
                           //color: disabledButtonSave ? '#7673737e' : '#000000'
                         }}
                       >
@@ -709,7 +711,8 @@ const Home = ({ navigation, props }: any) => {
                     >
                       <Text
                         style={{
-                          fontSize: 18
+                          fontSize: 18,
+                          color: '#757575'
                           //color: disabledButtonSave ? '#7673737e' : '#000000'
                         }}
                       >
@@ -904,7 +907,7 @@ const Home = ({ navigation, props }: any) => {
                         }}
                       >
                         <Ionicons name="image" size={30} color={'#000000'} />
-                        <Text>Add</Text>
+                        <Text style={{ color: '#757575' }}>Add</Text>
                       </View>
                     </TouchableOpacity>
                   )}
@@ -1027,12 +1030,15 @@ const Home = ({ navigation, props }: any) => {
               borderWidth: 1,
               borderRadius: 25,
               height: 40,
-              paddingLeft: 10
+              paddingLeft: 10,
+              color: 'black'
             }}
             value={searchText}
             placeholder="Pesquisar"
             onChangeText={(str: string) => searchMoments(str)}
             autoCapitalize="none"
+            placeholderTextColor={'#757575'}
+            cursorColor={'#000000'}
           />
           {moments.toString().length > 0 && (
             <FlatList
@@ -1116,7 +1122,8 @@ const styles = StyleSheet.create({
   dateText: {
     top: 5,
     fontWeight: 'bold',
-    marginLeft: 5
+    marginLeft: 5,
+    color: '#757575'
   },
   describeText: {
     color: '#6d20dab8',

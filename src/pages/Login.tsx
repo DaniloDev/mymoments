@@ -89,15 +89,116 @@ const Login = (props) => {
     }
   }
 
+  const verifiedIfThereDatas = async (userId: string) => {
+    try {
+      const userInfo = {
+        userId: userId
+      }
+      const data = await fetch(
+        'https://europe-west2-mymoments-d9088.cloudfunctions.net/RecoveryMoments',
+        {
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          body: JSON.stringify({ data: userInfo })
+        }
+      ).then((res) => {
+        res.json().then(async (r) => {
+          console.log('R SUPPORT verifiedIfThereDatas', r)
+          if (r.result.success == false) {
+            console.log('DEU PAU MOPAI verifiedIfThereDatas')
+          } else if (r.result.success == true) {
+            setTimeout(async () => {
+              console.log(
+                'AI MOPAI verifiedIfThereDatas dataStoreMoments',
+                r.result.data
+              )
+
+              let arrayVerifiedMoments: any
+
+              arrayVerifiedMoments = r.result.data
+
+              if (arrayVerifiedMoments.length > 0) {
+                return true
+              } else {
+                return false
+              }
+            }, 100)
+          } else {
+            console.log('DEU PAU MOPAI ELSE verifiedIfThereDatas')
+          }
+        })
+      })
+    } catch (error) {
+      console.log('DEU PAU MOPAI CATCH verifiedIfThereDatas')
+    }
+  }
+
   const RecoveryData = async (userId: any) => {
-    setTimeout(async () => {
-      await loadMoments(userId)
-      await loadStories(userId)
-    }, 150)
-    setTimeout(async () => {
-      await RecoveryMoments(userId)
-      await RecoveryStories(userId)
-    }, 300)
+    try {
+      const userInfo = {
+        userId: userId
+      }
+      const data = await fetch(
+        'https://europe-west2-mymoments-d9088.cloudfunctions.net/RecoveryMoments',
+        {
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          body: JSON.stringify({ data: userInfo })
+        }
+      ).then((res) => {
+        res.json().then(async (r) => {
+          console.log('R SUPPORT verifiedIfThereDatas', r)
+          if (r.result.success == false) {
+            console.log('DEU PAU MOPAI verifiedIfThereDatas')
+          } else if (r.result.success == true) {
+            setTimeout(async () => {
+              console.log(
+                'AI MOPAI verifiedIfThereDatas dataStoreMoments',
+                r.result.data
+              )
+
+              let arrayVerifiedMoments: any
+
+              arrayVerifiedMoments = r.result.data
+
+              if (arrayVerifiedMoments.length > 0) {
+                Alert.alert(
+                  'Atenção',
+                  'Deseja verificar e realizar recuperação de dados dessa conta ? ' +
+                    '\n' +
+                    ' Essa operação apagará seus "moments", se você ja fez registro de novos "moments" e não fez ainda não fez backup, faça antes de fazer a recuperação pois os dados serão apagados!',
+                  [
+                    {
+                      text: 'Cancel',
+                      onPress: () => {}
+                    },
+                    {
+                      text: 'OK',
+                      onPress: () => {
+                        // Nesse trecho tem que verificar se a internet
+
+                        setTimeout(async () => {
+                          await loadMoments(userId)
+                          await loadStories(userId)
+                        }, 150)
+                        setTimeout(async () => {
+                          await RecoveryMoments(userId)
+                          await RecoveryStories(userId)
+                        }, 300)
+                      }
+                    }
+                  ]
+                )
+              }
+            }, 100)
+          } else {
+            console.log('DEU PAU MOPAI ELSE verifiedIfThereDatas')
+          }
+        })
+      })
+    } catch (error) {
+      console.log('DEU PAU MOPAI CATCH verifiedIfThereDatas')
+    }
   }
 
   const RecoveryMoments = async (userId: any) => {

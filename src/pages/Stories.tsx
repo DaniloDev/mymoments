@@ -682,7 +682,8 @@ const Stories = (props: any) => {
                       >
                         <Text
                           style={{
-                            fontSize: 18
+                            fontSize: 18,
+                            color: '#757575'
                             //color: disabledButtonSave ? '#7673737e' : '#000000'
                           }}
                         >
@@ -696,7 +697,8 @@ const Stories = (props: any) => {
                       >
                         <Text
                           style={{
-                            fontSize: 18
+                            fontSize: 18,
+                            color: '#757575'
                             //color: disabledButtonSave ? '#7673737e' : '#000000'
                           }}
                         >
@@ -926,7 +928,7 @@ const Stories = (props: any) => {
                           }}
                         >
                           <Ionicons name="image" size={30} color={'#000000'} />
-                          <Text>Add</Text>
+                          <Text style={{ color: '#757575' }}>Add</Text>
                         </View>
                       </TouchableOpacity>
                     )}
@@ -1049,12 +1051,15 @@ const Stories = (props: any) => {
                 borderRadius: 25,
                 height: 40,
                 paddingLeft: 10,
-                marginTop: 5
+                marginTop: 5,
+                color: 'black'
               }}
               value={searchText}
               placeholder="Pesquisar"
               onChangeText={(str: string) => searchStories(str)}
               autoCapitalize="none"
+              placeholderTextColor={'#757575'}
+              cursorColor={'#000000'}
             />
             {stories.length > 0 && (
               <FlatList
@@ -1136,7 +1141,8 @@ const styles = StyleSheet.create({
   date: {
     fontWeight: 'bold',
     marginLeft: 15,
-    marginTop: 10
+    marginTop: 10,
+    color: '#757575'
   },
   button: {
     backgroundColor: '#62513E',
