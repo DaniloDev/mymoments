@@ -42,9 +42,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 import { User, onAuthStateChanged } from 'firebase/auth'
 import { authFirebase } from '../services/firebase'
+import PopupMenu from '../components/PopupMenu'
+import CircularProgress from 'react-native-circular-progress-indicator'
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
-import PopupMenu from '../components/PopupMenu'
 Ionicons.loadFont
 const Home = ({ navigation, props }: any) => {
   const SELECT_IMAGE = 'SELECT_IMAGE'
@@ -74,6 +75,12 @@ const Home = ({ navigation, props }: any) => {
 
   const [searchText, setSeaechText] = useState('')
   const [user, setUser] = useState<User | null>(null)
+
+  //######## Copied by Login ##############
+  const [restoraning, setRestauring] = useState(false)
+  const [value, setValue] = useState(100)
+  const [login, setLogin] = useState(false)
+  //######## End Copied by Login ##############
 
   const showModal = () => setVisible(true)
   const hideModal = () => setVisible(false)
@@ -169,7 +176,13 @@ const Home = ({ navigation, props }: any) => {
   useEffect(() => {
     onAuthStateChanged(authFirebase, (user) => {
       console.log('user ', user)
+      console.log('PROPS ', navigation)
       setUser(user)
+      const userInfo = authFirebase.currentUser
+
+      if (!userInfo) {
+        navigation.navigate('Login')
+      }
       loadMoments()
     })
   }, [user?.uid])
@@ -547,7 +560,7 @@ const Home = ({ navigation, props }: any) => {
         Keyboard.dismiss()
         Alert.alert('Success', 'Nice')
       } catch (err) {
-        Alert.alert(err)
+        Alert.alert('Error', err.message)
       }
     } else {
       Alert.alert(
@@ -612,6 +625,264 @@ const Home = ({ navigation, props }: any) => {
       }
     })
   }
+
+  // ####################### Copied By Login #########################################
+
+  const RecoveryData = async (userId: any) => {
+    try {
+      const userInfo = {
+        userId: userId
+      }
+      const data = await fetch(
+        'https://europe-west2-mymoments-d9088.cloudfunctions.net/RecoveryMoments',
+        {
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          body: JSON.stringify({ data: userInfo })
+        }
+      ).then((res) => {
+        res.json().then(async (r) => {
+          console.log('R SUPPORT verifiedIfThereDatas', r)
+          if (r.result.success == false) {
+            console.log('DEU PAU MOPAI verifiedIfThereDatas')
+          } else if (r.result.success == true) {
+            setTimeout(async () => {
+              console.log(
+                'AI MOPAI verifiedIfThereDatas dataStoreMoments',
+                r.result.data
+              )
+
+              let arrayVerifiedMoments: any
+
+              arrayVerifiedMoments = r.result.data
+
+              if (arrayVerifiedMoments.length > 0) {
+                Alert.alert(
+                  'Atenção',
+                  'Deseja verificar e realizar recuperação de dados dessa conta ? ' +
+                    '\n' +
+                    ' Essa operação apagará seus "moments", se você ja fez registro de novos "moments" e não fez ainda não fez backup, faça antes de fazer a recuperação pois os dados serão apagados!',
+                  [
+                    {
+                      text: 'Cancel',
+                      onPress: () => {
+                        props.navigation.navigate('Home')
+                      }
+                    },
+                    {
+                      text: 'OK',
+                      onPress: () => {
+                        // Nesse trecho tem que verificar se a internet
+                        setRestauring(true)
+                        setTimeout(async () => {
+                          await loadMoments(userId)
+                          await loadStories(userId)
+                        }, 150)
+                        setTimeout(async () => {
+                          await RecoveryMoments(userId)
+                          await RecoveryStories(userId)
+                        }, 300)
+                      }
+                    }
+                  ]
+                )
+              }
+            }, 100)
+          } else {
+            console.log('DEU PAU MOPAI ELSE verifiedIfThereDatas')
+          }
+        })
+      })
+    } catch (error) {
+      console.log('DEU PAU MOPAI CATCH verifiedIfThereDatas')
+    }
+  }
+
+  const RecoveryMoments = async (userId: any) => {
+    try {
+      const userInfo = {
+        userId: userId
+      }
+
+      console.log('USERINFO IN RECOVERYDATA ', userInfo)
+      const data = await fetch(
+        'https://europe-west2-mymoments-d9088.cloudfunctions.net/RecoveryMoments',
+        {
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          body: JSON.stringify({ data: userInfo })
+        }
+      ).then((res) => {
+        res.json().then(async (r) => {
+          console.log('R SUPPORT RecoveryMoments', r)
+          if (r.result.success == false) {
+            console.log('DEU PAU MOPAI RecoveryMoments')
+          } else if (r.result.success == true) {
+            setTimeout(async () => {
+              console.log(
+                'AI MOPAI RecoveryMoments dataStoreMoments',
+                r.result.data
+              )
+
+              await deleteMoments()
+              let arrayMoments: any
+
+              arrayMoments = r.result.data
+              console.log('ARRAY MOMENTS  ', arrayMoments)
+              console.log('ARRAY MOMENTS  LENGTH', arrayMoments.length)
+
+              for (let i = 0; i < arrayMoments.length; i++) {
+                const realm = await getRealm()
+                const dbName = 'Moment'
+
+                const dadosMoment = {
+                  id: arrayMoments[i].id,
+                  userId: arrayMoments[i].userId,
+                  name: arrayMoments[i].name,
+                  describe: arrayMoments[i].describe,
+                  image: arrayMoments[i].image,
+                  date: new Date(arrayMoments[i].date),
+                  createdAT: new Date(arrayMoments[i].createdAT),
+                  updatedAT: new Date(arrayMoments[i].updatedAT),
+                  deletedAT: arrayMoments[i].deletedAT
+                }
+                realm.write(() => {
+                  realm.create(dbName, dadosMoment)
+                })
+              }
+            }, 100)
+          } else {
+            console.log('DEU PAU MOPAI ELSE RecoveryMoments')
+          }
+        })
+      })
+    } catch (error) {
+      console.log('DEU PAU MOPAI CATCH RecoveryMoments')
+    }
+  }
+
+  const RecoveryStories = async (userId: any) => {
+    try {
+      const userInfo = {
+        userId: userId
+      }
+      const data = await fetch(
+        'https://europe-west2-mymoments-d9088.cloudfunctions.net/RecoveryStories',
+        {
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          body: JSON.stringify({ data: userInfo })
+        }
+      ).then((res) => {
+        res.json().then(async (r) => {
+          console.log('R SUPPORT RecoveryStories', r)
+          if (r.result.success == false) {
+            console.log('DEU PAU MOPAI RecoveryStories')
+          } else if (r.result.success == true) {
+            setTimeout(async () => {
+              console.log('AI MOPAI RecoveryStories', r.result.data)
+
+              await deleteStories()
+
+              let arrayStories: any
+
+              arrayStories = r.result.data
+              console.log('ARRAY STORIES  0', arrayStories)
+              console.log('ARRAY STORIES  LENGTH', arrayStories.length)
+
+              for (let i = 0; i < arrayStories.length; i++) {
+                const realm = await getRealm()
+                const dbName = 'Story'
+
+                const dadosStory = {
+                  id: arrayStories[i].id,
+                  userId: arrayStories[i].userId,
+                  moment_id: arrayStories[i].moment_id,
+                  describe: arrayStories[i].describe,
+                  feel: arrayStories[i].feel,
+                  reason: arrayStories[i].reason,
+                  placeName: arrayStories[i].placeName,
+                  image: arrayStories[i].image,
+                  date: new Date(arrayStories[i].date),
+                  createdAT: new Date(arrayStories[i].createdAT),
+                  updatedAT: new Date(arrayStories[i].updatedAT),
+                  emojiCategory: arrayStories[i].emojiCategory,
+                  deletedAT: arrayStories[i].deletedAT
+                }
+                realm.write(() => {
+                  realm.create(dbName, dadosStory)
+                })
+              }
+            }, 100)
+
+            setTimeout(() => {
+              setValue(25)
+            }, 500)
+
+            setTimeout(() => {
+              setValue(50)
+            }, 500)
+
+            setTimeout(() => {
+              setValue(75)
+            }, 500)
+
+            setTimeout(() => {
+              setValue(100)
+            }, 500)
+            setTimeout(() => {
+              setRestauring(false)
+            }, 500)
+          } else {
+            console.log('DEU PAU MOPAI ELSE RecoveryStories')
+          }
+        })
+      })
+    } catch (error) {
+      console.log('DEU PAU MOPAI CATCH RecoveryStories')
+    }
+  }
+
+  const deleteMoments = async () => {
+    console.log('MOMENTS in deleteMoments ', moments)
+    const dbName = 'Moment'
+    const realm = await getRealm()
+
+    for (let i = 0; i < moments.length; i++) {
+      realm.write(() => {
+        if (
+          realm.objects(dbName).filtered(`userId = '${moments[i].userId}'`)
+            .length > 0
+        ) {
+          realm.delete(
+            realm.objects(dbName).filtered(`userId = '${moments[i].userId}'`)
+          )
+        }
+      })
+    }
+  }
+
+  const deleteStories = async () => {
+    console.log('STORIES in deleteStories ', stories)
+    const dbName = 'Story'
+    const realm = await getRealm()
+
+    for (let i = 0; i < stories.length; i++) {
+      realm.write(() => {
+        if (
+          realm.objects(dbName).filtered(`userId = '${stories[i].userId}'`)
+            .length > 0
+        ) {
+          realm.delete(
+            realm.objects(dbName).filtered(`userId = '${stories[i].userId}'`)
+          )
+        }
+      })
+    }
+  }
+
+  //################ ENd Copied by login
+
   return (
     <>
       <View

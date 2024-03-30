@@ -71,6 +71,8 @@ const PopupMenu = (props) => {
       setUser(user)
       await loadMoments()
       await loadStories()
+
+      // user ? navigation.navigate('Home') : navigation.navigate('Login')
     })
   }, [user?.uid])
 
@@ -258,7 +260,10 @@ const PopupMenu = (props) => {
     {
       title: 'Sair',
       icon: 'log-out',
-      action: () => authFirebase.signOut()
+      action: () => {
+        authFirebase.signOut()
+        navigation.navigate('Login')
+      }
     },
 
     {

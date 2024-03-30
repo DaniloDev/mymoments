@@ -131,7 +131,7 @@ const Main = () => {
         >
           <Stack.Screen
             name="Home"
-            component={user && user.emailVerified ? Home : Login}
+            component={Home}
             options={{ headerShown: false }}
           />
 

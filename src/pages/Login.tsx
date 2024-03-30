@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Alert, StyleSheet, Text, View } from 'react-native'
 import { Input } from 'react-native-elements'
 import { TouchableOpacity } from 'react-native-gesture-handler'
@@ -22,17 +22,28 @@ import getRealm from '../services/realm'
 import { StorysProps } from '../models/Stories.interface'
 import { MomentsProps } from '../models/Moments.interface'
 
+import CircularProgress from 'react-native-circular-progress-indicator'
+import { useFocusEffect } from '@react-navigation/native'
+
 const Login = (props) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [user, setUser] = useState()
+  const [user, setUser] = useState<User | null>(null)
   const [moments, setMoments] = useState<MomentsProps[]>([])
   const [stories, setStories] = useState<StorysProps[]>([])
+  const [restoraning, setRestauring] = useState(false)
+  const [value, setValue] = useState(100)
 
   useEffect(() => {
     onAuthStateChanged(authFirebase, async (userHere) => {
       setUser(userHere)
 
+      /*const userInfo = authFirebase.currentUser
+
+      if (userInfo && userInfo?.emailVerified) {
+        props.navigation.navigate('Home')
+      }
+*/
       console.log('user IN LOGIN AT onAuthStateChanged', user)
     })
     GoogleSignin.configure({
@@ -170,13 +181,15 @@ const Login = (props) => {
                   [
                     {
                       text: 'Cancel',
-                      onPress: () => {}
+                      onPress: () => {
+                        props.navigation.navigate('Home')
+                      }
                     },
                     {
                       text: 'OK',
                       onPress: () => {
                         // Nesse trecho tem que verificar se a internet
-
+                        setRestauring(true)
                         setTimeout(async () => {
                           await loadMoments(userId)
                           await loadStories(userId)
@@ -317,6 +330,25 @@ const Login = (props) => {
                 })
               }
             }, 100)
+
+            setTimeout(() => {
+              setValue(25)
+            }, 500)
+
+            setTimeout(() => {
+              setValue(50)
+            }, 500)
+
+            setTimeout(() => {
+              setValue(75)
+            }, 500)
+
+            setTimeout(() => {
+              setValue(100)
+            }, 500)
+            setTimeout(() => {
+              setRestauring(false)
+            }, 500)
           } else {
             console.log('DEU PAU MOPAI ELSE RecoveryStories')
           }
@@ -371,15 +403,13 @@ const Login = (props) => {
         const usuarioAtual = authFirebase.currentUser
 
         await RecoveryData(usuarioAtual?.uid)
-
         if (usuarioAtual?.emailVerified) {
-          props.navigation.navigate('Home')
         } else {
           Alert.alert('Error', 'Email não verificado')
         }
       })
-      .catch((error) => {
-        Alert.alert(error.message)
+      .catch((error: any) => {
+        Alert.alert('Error Catch login', error.message)
       })
   }
 
@@ -434,49 +464,89 @@ const Login = (props) => {
 
   return (
     <>
-      <View
-        style={{
-          flex: 1,
-          alignContent: 'center',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#ffffff'
-        }}
-      >
-        <Input
-          value={email}
-          onChangeText={(str) => setEmail(str)}
-          placeholder="Email"
-          style={{ fontSize: 18 }}
-        />
-        <Input
-          value={password}
-          onChangeText={(str) => setPassword(str)}
-          placeholder="Senha"
-          secureTextEntry={true}
-          style={{ fontSize: 18 }}
-        />
-        <TouchableOpacity
-          onPress={loginWithEmailAndPassword}
+      {!restoraning ? (
+        <View
           style={{
-            backgroundColor: '#0d8f1a',
-            width: 200,
-            height: 50,
+            flex: 1,
             alignContent: 'center',
             alignItems: 'center',
             justifyContent: 'center',
-            borderRadius: 6
+            backgroundColor: '#ffffff'
           }}
         >
-          <Text style={styles.signINText}>Entrar</Text>
-        </TouchableOpacity>
+          <Input
+            value={email}
+            onChangeText={(str) => setEmail(str)}
+            placeholder="Email"
+            style={{ fontSize: 18 }}
+          />
+          <Input
+            value={password}
+            onChangeText={(str) => setPassword(str)}
+            placeholder="Senha"
+            secureTextEntry={true}
+            style={{ fontSize: 18 }}
+          />
+          <TouchableOpacity
+            onPress={loginWithEmailAndPassword}
+            style={{
+              backgroundColor: '#0d8f1a',
+              width: 200,
+              height: 50,
+              alignContent: 'center',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 6
+            }}
+          >
+            <Text style={styles.signINText}>Entrar</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => props.navigation.navigate('SignUP')}>
-          <Text style={styles.createAccount}>
-            Não possui conta? clique aqui
+          <TouchableOpacity onPress={() => props.navigation.navigate('SignUP')}>
+            <Text style={styles.createAccount}>
+              Não possui conta? clique aqui
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: '#ffffff',
+            justifyContent: 'center',
+            alignContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <CircularProgress
+            radius={90}
+            initialValue={0}
+            value={value}
+            titleColor="#222"
+            titleFontSize={20}
+            valueSuffix="%"
+            inActiveStrokeColor="#2ecc71"
+            inActiveStrokeOpacity={0.2}
+            inActiveStrokeWidth={6}
+            // duration={100000}
+            delay={2}
+            showProgressValue
+            onAnimationComplete={() =>
+              Alert.alert('Sucesso', 'Dados recuperados com sucesso!', [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    props.navigation.navigate('Home')
+                  }
+                }
+              ])
+            }
+          />
+          <Text style={{ color: '#000000', fontSize: 25, top: 5 }}>
+            Restaurando dados...
           </Text>
-        </TouchableOpacity>
-      </View>
+        </View>
+      )}
     </>
   )
 }
